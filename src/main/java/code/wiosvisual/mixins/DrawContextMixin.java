@@ -36,38 +36,38 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value={DrawContext.class})
 public class DrawContextMixin {
-    @Inject(method={"drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I"}, at={@At(value="HEAD")})
-    private void wiosvisual$beforeVanillaTextString(TextRenderer textRenderer, String text, int x, int y, int color, boolean shadow, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method={"drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)V"}, at={@At(value="HEAD")})
+    private void wiosvisual$beforeVanillaTextString(TextRenderer textRenderer, String text, int x, int y, int color, boolean shadow, CallbackInfo ci) {
         GuiRenderState.restoreFontAtlasesNearest();
     }
 
-    @Inject(method={"drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IIIZ)I"}, at={@At(value="HEAD")})
-    private void wiosvisual$beforeVanillaText(TextRenderer textRenderer, Text text, int x, int y, int color, boolean shadow, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method={"drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IIIZ)V"}, at={@At(value="HEAD")})
+    private void wiosvisual$beforeVanillaText(TextRenderer textRenderer, Text text, int x, int y, int color, boolean shadow, CallbackInfo ci) {
         GuiRenderState.restoreFontAtlasesNearest();
     }
 
-    @Inject(method={"drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/OrderedText;IIIZ)I"}, at={@At(value="HEAD")})
-    private void wiosvisual$beforeVanillaOrderedText(TextRenderer textRenderer, OrderedText text, int x, int y, int color, boolean shadow, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method={"drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/OrderedText;IIIZ)V"}, at={@At(value="HEAD")})
+    private void wiosvisual$beforeVanillaOrderedText(TextRenderer textRenderer, OrderedText text, int x, int y, int color, boolean shadow, CallbackInfo ci) {
         GuiRenderState.restoreFontAtlasesNearest();
     }
 
-    @Inject(method={"drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;III)I"}, at={@At(value="HEAD")})
-    private void wiosvisual$beforeVanillaShadowString(TextRenderer textRenderer, String text, int x, int y, int color, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method={"drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;III)V"}, at={@At(value="HEAD")})
+    private void wiosvisual$beforeVanillaShadowString(TextRenderer textRenderer, String text, int x, int y, int color, CallbackInfo ci) {
         GuiRenderState.restoreFontAtlasesNearest();
     }
 
-    @Inject(method={"drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;III)I"}, at={@At(value="HEAD")})
-    private void wiosvisual$beforeVanillaShadowText(TextRenderer textRenderer, Text text, int x, int y, int color, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method={"drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;III)V"}, at={@At(value="HEAD")})
+    private void wiosvisual$beforeVanillaShadowText(TextRenderer textRenderer, Text text, int x, int y, int color, CallbackInfo ci) {
         GuiRenderState.restoreFontAtlasesNearest();
     }
 
-    @Inject(method={"drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/OrderedText;III)I"}, at={@At(value="HEAD")})
-    private void wiosvisual$beforeVanillaShadowOrderedText(TextRenderer textRenderer, OrderedText text, int x, int y, int color, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method={"drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/OrderedText;III)V"}, at={@At(value="HEAD")})
+    private void wiosvisual$beforeVanillaShadowOrderedText(TextRenderer textRenderer, OrderedText text, int x, int y, int color, CallbackInfo ci) {
         GuiRenderState.restoreFontAtlasesNearest();
     }
 
-    @Inject(method={"drawTextWithBackground"}, at={@At(value="HEAD")})
-    private void wiosvisual$beforeVanillaTextBackground(TextRenderer textRenderer, Text text, int x, int y, int width, int color, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method={"drawTextWithBackground(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IIII)V"}, at={@At(value="HEAD")})
+    private void wiosvisual$beforeVanillaTextBackground(TextRenderer textRenderer, Text text, int x, int y, int width, int color, CallbackInfo ci) {
         GuiRenderState.restoreFontAtlasesNearest();
     }
 

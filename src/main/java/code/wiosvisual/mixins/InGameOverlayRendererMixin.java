@@ -32,7 +32,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value={InGameOverlayRenderer.class})
 public class InGameOverlayRendererMixin {
     @Inject(method={"renderFireOverlay"}, at={@At(value="HEAD")}, cancellable=true)
-    private static void renderFireOverlayHook(MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci) {
+    private static void renderFireOverlayHook(MatrixStack matrices, VertexConsumerProvider vertexConsumers, Sprite sprite, CallbackInfo ci) {
         FluidState fluidState;
         MinecraftClient client;
         NoRender noRender = NoRender.getInstance();

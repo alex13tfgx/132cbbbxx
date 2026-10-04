@@ -249,7 +249,9 @@ public abstract class HeldItemRendererHmiMixin {
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float)i * -45.0f));
     }
 
-    @Inject(method={"renderFirstPersonItem"}, at={@At(value="HEAD")}, cancellable=true)
+    // TODO(port 1.21.11): рендер руки переписан (OrderedRenderCommandQueue), а renderCustomFirstPersonItem
+    // вызывает удалённые методы. Пока не портировано — инжект намеренно указывает старую сигнатуру и не применяется.
+    @Inject(method={"renderFirstPersonItem(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/util/Hand;FLnet/minecraft/item/ItemStack;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"}, at={@At(value="HEAD")}, cancellable=true)
     private void onRenderFirstPersonItem(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
         SwingAnimations swings = SwingAnimations.getInstance();
         if (swings == null || !swings.isState() || !swings.isHmiMode()) {

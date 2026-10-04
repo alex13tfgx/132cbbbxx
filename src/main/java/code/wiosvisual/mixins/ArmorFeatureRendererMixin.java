@@ -19,7 +19,7 @@ package code.wiosvisual.mixins;
 
 import code.wiosvisual.features.impl.render.HitColor;
 import code.wiosvisual.utils.display.interfaces.QuickImports;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.feature.ArmorFeatureRenderer;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.entity.state.BipedEntityRenderState;
@@ -37,7 +37,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ArmorFeatureRendererMixin<S extends BipedEntityRenderState, M extends BipedEntityModel<S>, A extends BipedEntityModel<S>>
 implements QuickImports {
     @Inject(method={"render"}, at={@At(value="HEAD")}, cancellable=true)
-    private void Wiosvisual$hideArmorForCustomModels(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, S state, float limbAngle, float limbDistance, CallbackInfo ci) {
+    private void Wiosvisual$hideArmorForCustomModels(MatrixStack matrices, OrderedRenderCommandQueue queue, int light, S state, float limbAngle, float limbDistance, CallbackInfo ci) {
         HitColor.endArmorTint();
         if (ArmorFeatureRendererMixin.mc.world == null) {
             return;
@@ -64,7 +64,7 @@ implements QuickImports {
     }
 
     @Inject(method={"render"}, at={@At(value="RETURN")})
-    private void Wiosvisual$clearHitColorArmorTint(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, S state, float limbAngle, float limbDistance, CallbackInfo ci) {
+    private void Wiosvisual$clearHitColorArmorTint(MatrixStack matrices, OrderedRenderCommandQueue queue, int light, S state, float limbAngle, float limbDistance, CallbackInfo ci) {
         HitColor.endArmorTint();
     }
 }
