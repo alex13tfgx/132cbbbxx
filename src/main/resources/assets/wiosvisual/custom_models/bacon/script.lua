@@ -1,0 +1,5 @@
+-- Auto generated script file --
+
+--hide vanilla model
+vanilla_model.PLAYER:setVisible(false)
+vanilla_model.ARMOR:setVisible(false)

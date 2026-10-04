@@ -1,0 +1,35 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Fabric loom cache
+.loom-cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Игровая папка dev-запуска: конфиги, аккаунты, миры, логи — личные данные
+run/
+
+# Логи сборок и запусков
+*.log
+*.err
+
+# Локальные файлы
+.claude/
+_old_clickgui_backup/
+WiosMouse/
+*.lnk
+
+# Лаунчер: результаты сборки (собираются build.bat / package.bat)
+GuardListenLauncher/out/
+GuardListenLauncher/GuardListen.jar
+GuardListenLauncher/rt_tmp/
+GuardListenLauncher/launcher.json

@@ -1,0 +1,210 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.furry.ears.axolotl",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            24,
+            0
+          ]
+        },
+        {
+          "name": "ear_left",
+          "pivot": [
+            4.2,
+            27,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                4.1,
+                26.4,
+                -1.2
+              ],
+              "size": [
+                3.4,
+                0.9,
+                0.9
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                4.2,
+                26.8,
+                -0.8
+              ],
+              "rotation": [
+                0,
+                28,
+                10
+              ]
+            },
+            {
+              "origin": [
+                4.1,
+                27.8,
+                -1.2
+              ],
+              "size": [
+                3.4,
+                0.9,
+                0.9
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                4.2,
+                28.2,
+                -0.8
+              ],
+              "rotation": [
+                0,
+                36,
+                6
+              ]
+            },
+            {
+              "origin": [
+                4.1,
+                29.0,
+                -1.2
+              ],
+              "size": [
+                3.4,
+                0.9,
+                0.9
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                4.2,
+                29.4,
+                -0.8
+              ],
+              "rotation": [
+                0,
+                44,
+                2
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ear_right",
+          "pivot": [
+            -4.2,
+            27,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -7.5,
+                26.4,
+                -1.2
+              ],
+              "size": [
+                3.4,
+                0.9,
+                0.9
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                -4.2,
+                26.8,
+                -0.8
+              ],
+              "rotation": [
+                0,
+                -28,
+                -10
+              ],
+              "mirror": true
+            },
+            {
+              "origin": [
+                -7.5,
+                27.8,
+                -1.2
+              ],
+              "size": [
+                3.4,
+                0.9,
+                0.9
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                -4.2,
+                28.2,
+                -0.8
+              ],
+              "rotation": [
+                0,
+                -36,
+                -6
+              ],
+              "mirror": true
+            },
+            {
+              "origin": [
+                -7.5,
+                29.0,
+                -1.2
+              ],
+              "size": [
+                3.4,
+                0.9,
+                0.9
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                -4.2,
+                29.4,
+                -0.8
+              ],
+              "rotation": [
+                0,
+                -44,
+                -2
+              ],
+              "mirror": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

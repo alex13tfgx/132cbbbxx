@@ -1,0 +1,285 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.furry.ears.dragon",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            24,
+            0
+          ]
+        },
+        {
+          "name": "ear_left",
+          "pivot": [
+            3.8,
+            31,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                3.2,
+                31,
+                -1
+              ],
+              "size": [
+                2.4,
+                4.8,
+                1.2
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                3.8,
+                31,
+                0
+              ],
+              "rotation": [
+                -12,
+                18,
+                28
+              ]
+            },
+            {
+              "origin": [
+                4.6,
+                32.2,
+                -0.6
+              ],
+              "size": [
+                3.2,
+                1.2,
+                0.6
+              ],
+              "uv": [
+                0,
+                16
+              ],
+              "pivot": [
+                4.8,
+                32.6,
+                0
+              ],
+              "rotation": [
+                0,
+                20,
+                8
+              ]
+            },
+            {
+              "origin": [
+                4.4,
+                33.4,
+                -0.6
+              ],
+              "size": [
+                2.6,
+                1,
+                0.5
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                4.6,
+                33.8,
+                0
+              ],
+              "rotation": [
+                0,
+                18,
+                12
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ear_right",
+          "pivot": [
+            -3.8,
+            31,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -5.6,
+                31,
+                -1
+              ],
+              "size": [
+                2.4,
+                4.8,
+                1.2
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                -3.8,
+                31,
+                0
+              ],
+              "rotation": [
+                -12,
+                -18,
+                -28
+              ],
+              "mirror": true
+            },
+            {
+              "origin": [
+                -7.8,
+                32.2,
+                -0.6
+              ],
+              "size": [
+                3.2,
+                1.2,
+                0.6
+              ],
+              "uv": [
+                0,
+                16
+              ],
+              "pivot": [
+                -4.8,
+                32.6,
+                0
+              ],
+              "rotation": [
+                0,
+                -20,
+                -8
+              ],
+              "mirror": true
+            },
+            {
+              "origin": [
+                -7.0,
+                33.4,
+                -0.6
+              ],
+              "size": [
+                2.6,
+                1,
+                0.5
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                -4.6,
+                33.8,
+                0
+              ],
+              "rotation": [
+                0,
+                -18,
+                -12
+              ],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "horn_left",
+          "pivot": [
+            2.2,
+            32,
+            -1
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                1.8,
+                32,
+                -1.4
+              ],
+              "size": [
+                1.4,
+                4.2,
+                1.4
+              ],
+              "uv": [
+                48,
+                0
+              ],
+              "pivot": [
+                2.2,
+                32,
+                -1
+              ],
+              "rotation": [
+                22,
+                10,
+                12
+              ]
+            }
+          ]
+        },
+        {
+          "name": "horn_right",
+          "pivot": [
+            -2.2,
+            32,
+            -1
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -3.2,
+                32,
+                -1.4
+              ],
+              "size": [
+                1.4,
+                4.2,
+                1.4
+              ],
+              "uv": [
+                48,
+                0
+              ],
+              "pivot": [
+                -2.2,
+                32,
+                -1
+              ],
+              "rotation": [
+                22,
+                -10,
+                -12
+              ],
+              "mirror": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

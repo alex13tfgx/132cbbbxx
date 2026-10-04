@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arbuz.cc — Watermark Overlay</title>
+<style>
+  /* ============ WATERMARK ============ */
+  .watermark {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+
+    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    pointer-events: none;   /* не перехватывает клики по контенту */
+    user-select: none;
+
+    --pill-bg: #2C2F33;
+    --accent: #3DDC97;
+    --accent-bright: #4EF2C3;
+    --text: #FFFFFF;
+    --text-muted: #D2D6DB;
+  }
+
+  .watermark * { box-sizing: border-box; }
+
+  .wm-pill {
+    display: flex;
+    align-items: center;
+    background: var(--pill-bg);
+    border-radius: 50px;
+    color: var(--text);
+    white-space: nowrap;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .28), 0 1px 2px rgba(0, 0, 0, .2);
+  }
+
+  /* --- Верхний виджет --- */
+  .wm-pill--main {
+    gap: 14px;
+    padding: 11px 24px 11px 18px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .wm-logo {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+    color: var(--accent-bright);
+  }
+
+  .wm-brand { color: var(--text); }
+
+  .wm-divider {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--accent-bright);
+    background: var(--pill-bg);
+  }
+
+  .wm-credits {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* --- Нижний виджет --- */
+  .wm-pill--stats {
+    gap: 20px;
+    padding: 7px 18px;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+
+  .wm-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .wm-stat svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+
+  @media (max-width: 520px) {
+    .watermark { bottom: 12px; left: 12px; right: 12px; gap: 8px; }
+    .wm-pill { flex-wrap: wrap; white-space: normal; }
+    .wm-pill--main { font-size: 13px; padding: 9px 16px; gap: 10px; }
+    .wm-pill--stats { gap: 14px; }
+  }
+
+  /* ============ ДЕМО-КОНТЕНТ (можно удалить) ============ */
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #fff;
+  }
+  .demo { padding: 60px 40px; max-width: 720px; line-height: 1.7; opacity: .85; }
+</style>
+</head>
+<body>
+
+  <!-- ====== ВАТЕРМАРКА: вставьте этот блок в любую страницу ====== -->
+  <div class="watermark">
+
+    <div class="wm-pill wm-pill--main">
+      <!-- Логотип: стилизованная "A" -->
+      <svg class="wm-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 2.5 22.5 21H1.5L12 2.5Z" fill="currentColor"/>
+        <path d="M12 10 16 17H8l4-7Z" fill="#2C2F33"/>
+      </svg>
+
+      <span class="wm-brand">Arbuz.cc</span>
+      <span class="wm-divider" aria-hidden="true"></span>
+      <span class="wm-credits">by duckcorp and pastacompany</span>
+    </div>
+
+    <div class="wm-pill wm-pill--stats">
+      <div class="wm-stat">
+        <!-- Глобус -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18-2.5-2.7-2.5-15.3 0-18Z"/>
+        </svg>
+        <span>Singleplayer</span>
+      </div>
+
+      <div class="wm-stat">
+        <!-- Молния -->
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/>
+        </svg>
+        <span>54fps</span>
+      </div>
+
+      <div class="wm-stat">
+        <!-- Облако -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 10.3 3.85 3.85 0 0 0 7 19h10.5Z"/>
+        </svg>
+        <span>0ms</span>
+      </div>
+    </div>
+
+  </div>
+  <!-- ====== /ВАТЕРМАРКА ====== -->
+
+  <!-- Демо-контент под ватермаркой -->
+  <div class="demo">
+    <h1>Контент страницы</h1>
+    <p>Ватермарка зафиксирована в левом нижнем углу и остаётся на месте при скролле.
+       Блок не перехватывает клики — <code>pointer-events: none</code>.</p>
+    <p style="height:1200px">Прокрутите страницу, чтобы проверить фиксацию.</p>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,172 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.furry.tails.raccoon",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            12,
+            0
+          ]
+        },
+        {
+          "name": "tail1",
+          "pivot": [
+            0,
+            13.25,
+            2.2
+          ],
+          "parent": "root",
+          "rotation": [
+            -8,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1.5,
+                12.2,
+                2.2
+              ],
+              "size": [
+                3.0,
+                3.0,
+                3.8
+              ],
+              "uv": [
+                16,
+                16
+              ],
+              "pivot": [
+                0,
+                13.25,
+                2.2
+              ],
+              "rotation": [
+                -8,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "tail2",
+          "pivot": [
+            0,
+            12.545,
+            5.43
+          ],
+          "parent": "tail1",
+          "cubes": [
+            {
+              "origin": [
+                -1.35,
+                11.6,
+                5.43
+              ],
+              "size": [
+                2.7,
+                2.7,
+                3.6
+              ],
+              "uv": [
+                48,
+                0
+              ],
+              "pivot": [
+                0,
+                12.545,
+                5.43
+              ],
+              "rotation": [
+                -12,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "tail3",
+          "pivot": [
+            0,
+            11.84,
+            8.49
+          ],
+          "parent": "tail2",
+          "cubes": [
+            {
+              "origin": [
+                -1.2,
+                11.0,
+                8.49
+              ],
+              "size": [
+                2.4,
+                2.4,
+                3.4
+              ],
+              "uv": [
+                16,
+                16
+              ],
+              "pivot": [
+                0,
+                11.84,
+                8.49
+              ],
+              "rotation": [
+                -16,
+                0,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -1.6,
+                10.7,
+                11.29
+              ],
+              "size": [
+                3.2,
+                3.0,
+                2.2
+              ],
+              "uv": [
+                0,
+                16
+              ],
+              "pivot": [
+                0,
+                11.84,
+                8.49
+              ],
+              "rotation": [
+                -16,
+                0,
+                0
+              ],
+              "inflate": 0.12
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

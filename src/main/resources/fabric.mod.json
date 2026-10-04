@@ -1,0 +1,32 @@
+{
+  "accessWidener": "accesswidener",
+  "schemaVersion": 1,
+  "id": "renderextras",
+  "version": "1.0.0",
+  "icon": "assets/minecraft/icon.png",
+  "name": "Render Extras",
+  "description": "Client rendering utilities",
+  "authors": [
+    "RenderExtras"
+  ],
+  "contact": {
+    "website": "",
+    "repo": "none"
+  },
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "code.wiosvisual.Wiosvisual",
+      "code.wiosvisual.common.proxy.ProxyServer"
+    ]
+  },
+  "mixins": [
+    "mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "\u003e\u003d0.16.8",
+    "fabric": "*",
+    "minecraft": "~1.21.11"
+  }
+}

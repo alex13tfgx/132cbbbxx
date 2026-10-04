@@ -1,0 +1,157 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.furry.ears.raccoon",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            24,
+            0
+          ]
+        },
+        {
+          "name": "ear_left",
+          "pivot": [
+            3.6,
+            32,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                3.135,
+                32,
+                -1
+              ],
+              "size": [
+                3.1,
+                4.8,
+                1.4
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                3.6,
+                32,
+                0
+              ],
+              "rotation": [
+                -8,
+                8,
+                15
+              ]
+            },
+            {
+              "origin": [
+                3.585,
+                32.3,
+                -1.55
+              ],
+              "size": [
+                2.2,
+                3.6,
+                0.7
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                3.6,
+                32,
+                0
+              ],
+              "rotation": [
+                -8,
+                8,
+                15
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ear_right",
+          "pivot": [
+            -3.6,
+            32,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -6.235,
+                32,
+                -1
+              ],
+              "size": [
+                3.1,
+                4.8,
+                1.4
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                -3.6,
+                32,
+                0
+              ],
+              "rotation": [
+                -8,
+                -8,
+                -15
+              ],
+              "mirror": true
+            },
+            {
+              "origin": [
+                -5.785,
+                32.3,
+                -1.55
+              ],
+              "size": [
+                2.2,
+                3.6,
+                0.7
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                -3.6,
+                32,
+                0
+              ],
+              "rotation": [
+                -8,
+                -8,
+                -15
+              ],
+              "mirror": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

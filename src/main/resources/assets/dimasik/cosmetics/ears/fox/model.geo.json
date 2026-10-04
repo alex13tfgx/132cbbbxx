@@ -1,0 +1,157 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.furry.ears.fox",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            24,
+            0
+          ]
+        },
+        {
+          "name": "ear_left",
+          "pivot": [
+            3.6,
+            32,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                3.105,
+                32,
+                -1
+              ],
+              "size": [
+                3.3,
+                6.4,
+                1.4
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                3.6,
+                32,
+                0
+              ],
+              "rotation": [
+                -12,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                3.555,
+                32.3,
+                -1.55
+              ],
+              "size": [
+                2.4,
+                5.2,
+                0.7
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                3.6,
+                32,
+                0
+              ],
+              "rotation": [
+                -12,
+                8,
+                16
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ear_right",
+          "pivot": [
+            -3.6,
+            32,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -6.405,
+                32,
+                -1
+              ],
+              "size": [
+                3.3,
+                6.4,
+                1.4
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                -3.6,
+                32,
+                0
+              ],
+              "rotation": [
+                -12,
+                -8,
+                -16
+              ],
+              "mirror": true
+            },
+            {
+              "origin": [
+                -5.955,
+                32.3,
+                -1.55
+              ],
+              "size": [
+                2.4,
+                5.2,
+                0.7
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                -3.6,
+                32,
+                0
+              ],
+              "rotation": [
+                -12,
+                -8,
+                -16
+              ],
+              "mirror": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

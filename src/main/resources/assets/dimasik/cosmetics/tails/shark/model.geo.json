@@ -1,0 +1,165 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.furry.tails.shark",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            12,
+            0
+          ]
+        },
+        {
+          "name": "tail1",
+          "pivot": [
+            0,
+            12,
+            2
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1.6,
+                10.8,
+                2
+              ],
+              "size": [
+                3.2,
+                3.2,
+                5.5
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                0,
+                12,
+                2
+              ],
+              "rotation": [
+                -6,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "tail2",
+          "pivot": [
+            0,
+            11.4,
+            7.4
+          ],
+          "parent": "tail1",
+          "cubes": [
+            {
+              "origin": [
+                -1.2,
+                10.4,
+                7.2
+              ],
+              "size": [
+                2.4,
+                2.6,
+                4
+              ],
+              "uv": [
+                16,
+                0
+              ],
+              "pivot": [
+                0,
+                11.4,
+                7.4
+              ],
+              "rotation": [
+                4,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "tail3",
+          "pivot": [
+            0,
+            11.2,
+            11.2
+          ],
+          "parent": "tail2",
+          "cubes": [
+            {
+              "origin": [
+                -0.4,
+                11.2,
+                10.8
+              ],
+              "size": [
+                0.8,
+                4.8,
+                3.6
+              ],
+              "uv": [
+                48,
+                0
+              ],
+              "pivot": [
+                0,
+                12.4,
+                12
+              ],
+              "rotation": [
+                -8,
+                0,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -0.4,
+                8.4,
+                11.4
+              ],
+              "size": [
+                0.8,
+                3.2,
+                3.0
+              ],
+              "uv": [
+                0,
+                16
+              ],
+              "pivot": [
+                0,
+                9.6,
+                12.2
+              ],
+              "rotation": [
+                18,
+                0,
+                0
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

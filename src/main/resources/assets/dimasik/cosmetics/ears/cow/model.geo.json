@@ -1,0 +1,232 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.furry.ears.cow",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            24,
+            0
+          ]
+        },
+        {
+          "name": "ear_left",
+          "pivot": [
+            4.2,
+            30.5,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                3.4,
+                29.4,
+                -0.6
+              ],
+              "size": [
+                3.6,
+                2.4,
+                1.2
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                4.2,
+                30.5,
+                0
+              ],
+              "rotation": [
+                0,
+                18,
+                28
+              ]
+            },
+            {
+              "origin": [
+                3.8,
+                29.7,
+                -1.0
+              ],
+              "size": [
+                2.6,
+                1.6,
+                0.5
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                4.2,
+                30.5,
+                0
+              ],
+              "rotation": [
+                0,
+                18,
+                28
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ear_right",
+          "pivot": [
+            -4.2,
+            30.5,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -7.0,
+                29.4,
+                -0.6
+              ],
+              "size": [
+                3.6,
+                2.4,
+                1.2
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                -4.2,
+                30.5,
+                0
+              ],
+              "rotation": [
+                0,
+                -18,
+                -28
+              ],
+              "mirror": true
+            },
+            {
+              "origin": [
+                -6.4,
+                29.7,
+                -1.0
+              ],
+              "size": [
+                2.6,
+                1.6,
+                0.5
+              ],
+              "uv": [
+                32,
+                0
+              ],
+              "pivot": [
+                -4.2,
+                30.5,
+                0
+              ],
+              "rotation": [
+                0,
+                -18,
+                -28
+              ],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "horn_left",
+          "pivot": [
+            3,
+            32,
+            -1
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                2.4,
+                32,
+                -1.4
+              ],
+              "size": [
+                1.4,
+                2.8,
+                1.4
+              ],
+              "uv": [
+                48,
+                32
+              ],
+              "pivot": [
+                3,
+                32,
+                -1
+              ],
+              "rotation": [
+                16,
+                8,
+                22
+              ]
+            }
+          ]
+        },
+        {
+          "name": "horn_right",
+          "pivot": [
+            -3,
+            32,
+            -1
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -3.8,
+                32,
+                -1.4
+              ],
+              "size": [
+                1.4,
+                2.8,
+                1.4
+              ],
+              "uv": [
+                48,
+                32
+              ],
+              "pivot": [
+                -3,
+                32,
+                -1
+              ],
+              "rotation": [
+                16,
+                -8,
+                -22
+              ],
+              "mirror": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

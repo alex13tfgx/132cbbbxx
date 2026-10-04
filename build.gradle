@@ -1,0 +1,126 @@
+plugins {
+    id 'fabric-loom' version '1.13.6'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/accesswidener")
+
+    // Javadoc из Fabric API в dev-среде не нужен.
+    enableModProvidedJavadoc = false
+
+    intermediaryUrl = "https://maven.fabricmc.net/net/fabricmc/intermediary/%1\$s/intermediary-%1\$s-v2.jar"
+}
+
+sourceSets {
+    main {
+        java {
+            exclude "code/wiosvisual/mixins/BaritoneGameEventHandlerMixin.java"
+        }
+    }
+}
+
+repositories {
+    maven { url "https://maven.fabricmc.net/" }
+    maven { url "https://maven.shedaniel.me/" }
+    maven { url "https://maven.terraformersmc.com/releases/" }
+    maven { url "https://jitpack.io" }
+    maven { url "https://maven.maxhenkel.de/repository/public" }
+}
+
+configurations {
+    intermediaryCompile
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    // Читаемые имена Yarn (MinecraftClient, Entity, ...). В jar при remapJar всё переводится
+    // обратно в intermediary, включая строки в аннотациях миксинов.
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.3")))
+
+    include(implementation("org.java-websocket:Java-WebSocket:1.5.4"))
+
+    include(implementation("dev.redstones.mediaplayerinfo:media-player-info:0.1.0"))
+    // media-player-info написан на Kotlin: include не вшивает транзитивные зависимости,
+    // без них MusicInfo работает только в dev-запуске, а в собранном jar падает.
+    include(implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22"))
+    include(implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.3"))
+
+    include(implementation("io.netty:netty-codec-socks:4.1.82.Final"))
+    include(implementation("io.netty:netty-handler-proxy:4.1.82.Final"))
+
+    compileOnly "org.projectlombok:lombok:1.18.30"
+    annotationProcessor "org.projectlombok:lombok:1.18.30"
+
+    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
+
+    compileOnly 'com.google.guava:guava:33.0-jre'
+
+}
+
+configurations.compileClasspath.resolutionStrategy.dependencySubstitution {
+    // nothing extra needed — loom already puts minecraft on classpath
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+    it.options.encoding = "UTF-8"
+    it.options.compilerArgs += [
+        // Только Lombok (нужен перенесённым классам ru.mentions); остальные процессоры, как и раньше, не запускаются.
+        "-processor", "lombok.launch.AnnotationProcessorHider\$AnnotationProcessor",
+        "-AdefaultRequire=0",
+        "-Amixin.checks.interfaces=false"
+    ]
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archivesBaseName}" }
+    }
+}
+
+// ===========================================================
+//  ВЫКЛАДКА В ЛАУНЧЕР GuardListen
+//  После каждой сборки jar мода копируется в общую папку лаунчера
+//  (%APPDATA%\GuardListen\clients\wios.jar). Лаунчер берёт оттуда самый
+//  свежий билд при следующем запуске игры — даже если сейчас он закрыт.
+// ===========================================================
+def launcherClientsDir = file("${System.getenv('APPDATA') ?: System.getProperty('user.home')}/GuardListen/clients")
+
+tasks.register('publishToLauncher', Copy) {
+    group       = 'build'
+    description = 'Copy the built mod jar into the GuardListen launcher'
+    dependsOn remapJar
+    from(remapJar.archiveFile)
+    into(launcherClientsDir)
+    rename { 'wios.jar' }
+    doLast {
+        println "[Launcher] Билд выложен для GuardListen: ${new File(launcherClientsDir, 'wios.jar')}"
+    }
+}
+
+remapJar.finalizedBy 'publishToLauncher'

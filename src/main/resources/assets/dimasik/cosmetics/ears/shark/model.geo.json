@@ -1,0 +1,103 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.furry.ears.shark",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            24,
+            0
+          ]
+        },
+        {
+          "name": "ear_left",
+          "pivot": [
+            0,
+            32,
+            0
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -1.2,
+                32,
+                -1.2
+              ],
+              "size": [
+                2.4,
+                5.5,
+                2.4
+              ],
+              "uv": [
+                0,
+                0
+              ],
+              "pivot": [
+                0,
+                32,
+                0
+              ],
+              "rotation": [
+                18,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ear_right",
+          "pivot": [
+            0,
+            28,
+            3
+          ],
+          "parent": "root",
+          "cubes": [
+            {
+              "origin": [
+                -0.8,
+                26,
+                2.2
+              ],
+              "size": [
+                1.6,
+                3.2,
+                3.6
+              ],
+              "uv": [
+                16,
+                0
+              ],
+              "pivot": [
+                0,
+                27,
+                3
+              ],
+              "rotation": [
+                -12,
+                0,
+                0
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

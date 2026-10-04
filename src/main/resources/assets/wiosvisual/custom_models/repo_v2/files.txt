@@ -1,0 +1,9 @@
+EZAnims.lua
+GSAnimBlend.lua
+SquAPI.lua
+SquAssets.lua
+avatar.json
+avatar.png
+model.bbmodel
+script.lua
+swinging_physics.lua

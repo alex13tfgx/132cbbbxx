@@ -1,0 +1,23 @@
+{
+  "vertex": "wiosvisual:core/motion_blur",
+  "fragment": "wiosvisual:core/motion_blur",
+  "samplers": [
+    { "name": "Sampler0" },
+    { "name": "DepthSampler" }
+  ],
+  "uniforms": [
+    { "name": "ModelViewMat",       "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "ProjMat",            "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "MvInverse",          "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "ProjInverse",        "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "PrevModelView",      "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "PrevProjection",     "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "CameraDelta",        "type": "float",     "count": 3,  "values": [ 0.0, 0.0, 0.0 ] },
+    { "name": "ViewRes",            "type": "float",     "count": 2,  "values": [ 1.0, 1.0 ] },
+    { "name": "BlendFactor",        "type": "float",     "count": 1,  "values": [ 0.5 ] },
+    { "name": "InverseSamples",     "type": "float",     "count": 1,  "values": [ 1.0 ] },
+    { "name": "HandDepthThreshold", "type": "float",     "count": 1,  "values": [ 0.56 ] },
+    { "name": "Samples",            "type": "int",       "count": 1,  "values": [ 0 ] },
+    { "name": "HalfSamples",        "type": "int",       "count": 1,  "values": [ 0 ] }
+  ]
+}

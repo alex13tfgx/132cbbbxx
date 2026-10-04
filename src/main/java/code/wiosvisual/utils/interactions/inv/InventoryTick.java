@@ -1,0 +1,42 @@
+/*
+ * Decompiled with CFR 0.152.
+ */
+package code.wiosvisual.utils.interactions.inv;
+
+import java.util.ArrayList;
+
+public class InventoryTick {
+    static ArrayList<Scheluder> scheluders = new ArrayList();
+
+    public static void schelude(Runnable action, int ticks) {
+        scheluders.add(new Scheluder(action, ticks));
+    }
+
+    public static void update() {
+        scheluders.removeIf(scheluder -> scheluder.wait_tick == -1);
+        for (Scheluder scheluder2 : scheluders) {
+            scheluder2.update();
+        }
+    }
+
+    static class Scheluder {
+        private int wait_tick;
+        private Runnable action;
+
+        public Scheluder(Runnable action, int wait_tick) {
+            this.action = action;
+            this.wait_tick = wait_tick;
+        }
+
+        public void execute() {
+            this.action.run();
+        }
+
+        public void update() {
+            --this.wait_tick;
+            if (this.wait_tick == 0) {
+                this.execute();
+            }
+        }
+    }
+}
