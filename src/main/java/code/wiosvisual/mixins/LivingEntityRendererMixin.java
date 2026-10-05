@@ -38,8 +38,11 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.render.command.ModelCommandRenderer;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
+import net.minecraft.client.texture.Sprite;
+import code.wiosvisual.utils.display.render.state.ILivingStateEntity;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
@@ -75,7 +78,10 @@ implements QuickImports {
     @Shadow
     public abstract Identifier getTexture(LivingEntityRenderState var1);
 
-    @Redirect(method={"render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"}, at=@At(value="INVOKE", target="Lnet/minecraft/client/render/entity/LivingEntityRenderer;getRenderLayer(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;ZZZ)Lnet/minecraft/client/render/RenderLayer;"))
+    private static final String RENDER = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;Lnet/minecraft/client/render/state/CameraRenderState;)V";
+    private static final String SUBMIT_MODEL = "Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/RenderLayer;IIILnet/minecraft/client/texture/Sprite;ILnet/minecraft/client/render/command/ModelCommandRenderer$CrumblingOverlayCommand;)V";
+
+    @Redirect(method={RENDER}, at=@At(value="INVOKE", target="Lnet/minecraft/client/render/entity/LivingEntityRenderer;getRenderLayer(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;ZZZ)Lnet/minecraft/client/render/RenderLayer;"))
     private RenderLayer renderHook(LivingEntityRenderer instance, LivingEntityRenderState state, boolean showBody, boolean translucent, boolean showOutline) {
         EntityColorEvent event;
         if (!translucent && state.width == 0.6f && (event = SafeEvents.dispatch(() -> new EntityColorEvent(-1))) != null && event.isCancelled()) {
@@ -84,66 +90,35 @@ implements QuickImports {
         return this.getRenderLayer(state, showBody, translucent, showOutline);
     }
 
-    @Inject(method={"render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"}, at={@At(value="INVOKE", target="Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;III)V")})
-    private void Wiosvisual$hidePlayerModel(LivingEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        Entity entity;
-        EntityModel<?> entityModel;
-        PlayerEntityRenderState playerState;
-        block6: {
-            block5: {
-                if (!(state instanceof PlayerEntityRenderState)) break block5;
-                playerState = (PlayerEntityRenderState)state;
-                entityModel = this.model;
-                if (entityModel instanceof PlayerEntityModel) break block6;
-            }
-            return;
-        }
-        PlayerEntityModel playerModel = (PlayerEntityModel)entityModel;
-        Entity entity2 = entity = LivingEntityRendererMixin.mc.world == null ? null : LivingEntityRendererMixin.mc.world.getEntityById(playerState.id);
-        if (!(entity instanceof PlayerEntity)) {
-            return;
-        }
-        PlayerEntity player = (PlayerEntity)entity;
-    }
-
-    @Redirect(method={"render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"}, at=@At(value="INVOKE", target="Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;III)V"))
-    private void renderModelHook(EntityModel<?> instance, MatrixStack matrixStack, VertexConsumer vertexConsumer, int i, int j, int l, @Local(ordinal=0, argsOnly=true) LivingEntityRenderState renderState, @Local(ordinal=0, argsOnly=true) VertexConsumerProvider vertexConsumers) {
-        EntityColorEvent event;
-        LivingEntity tintTarget = LivingEntityRendererMixin.resolveLiving(renderState);
+    /** 1.21.11: модель не рисуется сразу, а ставится в очередь submitModel — красим её там (HitColor, цвет невидимок). */
+    @Redirect(method={RENDER}, at=@At(value="INVOKE", target=SUBMIT_MODEL))
+    private void renderModelHook(OrderedRenderCommandQueue queue, Model model, Object stateObj, MatrixStack matrixStack, RenderLayer layer, int light, int overlay, int color, Sprite sprite, int outlineColor, ModelCommandRenderer.CrumblingOverlayCommand crumbling) {
+        LivingEntityRenderState renderState = (LivingEntityRenderState)stateObj;
+        LivingEntity tintTarget = ILivingStateEntity.of(renderState);
         if (tintTarget != null) {
             HitColor hitColor = HitColor.getInstance();
             if (hitColor != null && hitColor.shouldTint(tintTarget, renderState.hurt)) {
-                instance.render(matrixStack, vertexConsumer, i, hitColor.getOverlay(j), hitColor.getTintColor(l));
+                queue.submitModel(model, stateObj, matrixStack, layer, light, hitColor.getOverlay(overlay), hitColor.getTintColor(color), sprite, outlineColor, crumbling);
                 return;
             }
         }
-        int color = l;
-        if (renderState.invisibleToPlayer && (event = SafeEvents.dispatch(() -> new EntityColorEvent(l))) != null) {
+        EntityColorEvent event;
+        int baseColor = color;
+        if (renderState.invisibleToPlayer && (event = SafeEvents.dispatch(() -> new EntityColorEvent(baseColor))) != null) {
             color = event.getColor();
         }
-        instance.render(matrixStack, vertexConsumer, i, j, color);
-        // Модель ставится в очередь обводки, а рисуется после выгрузки буфера сущностей.
-        if (tintTarget != null && BodyOutline.shouldOutline((Entity)tintTarget)) {
-            OutlineRenderer.enqueue(instance, matrixStack, BodyOutline.outlineColor(), BodyOutline.outlineThickness());
+        queue.submitModel(model, stateObj, matrixStack, layer, light, overlay, color, sprite, outlineColor, crumbling);
+        if (tintTarget != null && model instanceof EntityModel<?> entityModel && BodyOutline.shouldOutline((Entity)tintTarget)) {
+            OutlineRenderer.enqueue(entityModel, matrixStack, BodyOutline.outlineColor(), BodyOutline.outlineThickness());
         }
     }
 
-    /**
-     * У PlayerEntityRenderState есть id, поэтому игрока находим по нему; для остальных существ
-     * берём того, кого EntityRenderDispatcher рисует прямо сейчас.
-     */
-    @Unique
-    private static LivingEntity resolveLiving(LivingEntityRenderState renderState) {
-        if (LivingEntityRendererMixin.mc.world == null) {
-            return null;
+    /** Запоминаем на render-state, из какой сущности он собран (нужно HitColor и броне). */
+    @Inject(method={"updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V"}, at={@At(value="TAIL")})
+    private void wiosvisual$linkEntity(LivingEntity entity, LivingEntityRenderState state, float tickDelta, CallbackInfo ci) {
+        if (state instanceof ILivingStateEntity link) {
+            link.wiosvisual$setEntity(entity);
         }
-        if (renderState instanceof PlayerEntityRenderState) {
-            PlayerEntityRenderState playerState = (PlayerEntityRenderState)renderState;
-            Entity byId = LivingEntityRendererMixin.mc.world.getEntityById(playerState.id);
-            return byId instanceof LivingEntity ? (LivingEntity)byId : null;
-        }
-        Entity current = HitColor.getRenderedEntity();
-        return current instanceof LivingEntity ? (LivingEntity)current : null;
     }
 
     /** Ванилла никогда не рисует свой ник — показываем его от третьего лица, чтобы было видно лого Wios. */

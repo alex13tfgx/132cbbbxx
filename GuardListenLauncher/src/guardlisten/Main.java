@@ -45,6 +45,8 @@ public final class Main {
     private BufferedImage customAvatar;
     private int clientIdx;
     private boolean registerMode, busy;
+    /** Сколько игр, запущенных этим лаунчером, сейчас работает. */
+    private final java.util.concurrent.atomic.AtomicInteger games = new java.util.concurrent.atomic.AtomicInteger();
 
     // auth
     private Ui.Field loginField, passField, pass2Field;
@@ -483,7 +485,9 @@ public final class Main {
         if (busy || actionBar == null) return;
         boolean inst = clients.get(clientIdx).installed(root);
         launchBtn.set(inst ? "Играть" : "Установить", inst ? Wv.Glyph.PLAY : Wv.Glyph.DOWNLOAD);
+        int g = games.get();
         if (lastError != null) actionBar.status(lastError, Wv.ActionBar.ERR);
+        else if (g > 0) actionBar.status(g > 1 ? "Запущено игр: " + g : "Игра запущена", Wv.ActionBar.OK);
         else if (shownBuild == 0) actionBar.status("Сборка клиента не найдена", Wv.ActionBar.ERR);
         else actionBar.status("Готов к запуску", Wv.ActionBar.OK);
     }
@@ -957,6 +961,8 @@ public final class Main {
         try { frame.setIconImage(javax.imageio.ImageIO.read(Main.class.getResource("/icon.png"))); } catch (Exception ignored) { }
         frame.setUndecorated(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // свёрнутое окно частицы не крутит; при разворачивании — запускаем снова
+        frame.addWindowStateListener(e -> { if ((e.getNewState() & Frame.ICONIFIED) == 0) startParticles(); });
         frame.setContentPane(rootPanel);
         frame.setSize(AUTH_W, AUTH_H);
         frame.setLocationRelativeTo(null);
@@ -1013,7 +1019,8 @@ public final class Main {
     }
 
     private final Anim.Ticker particleTicker = dt -> {
-        if (!particles.active() || frame == null || !frame.isVisible()) return false;
+        if (!particles.active() || frame == null || !frame.isVisible()
+                || (frame.getExtendedState() & Frame.ICONIFIED) != 0) return false;
         particles.step(dt);
         rootPanel.repaintBackdrop();
         return true;
@@ -1057,36 +1064,65 @@ public final class Main {
                 Installer.Plan plan = new Installer(root).prepare(c, nick, ram, jar, ses, this::progress);
                 if (unlimitedFps()) applyUnlimitedFps(plan.gameDir);
                 Files.createDirectories(root.resolve("logs"));
-                Path log = root.resolve("logs").resolve(c.id + "-latest.log");
-                Process p = new ProcessBuilder(plan.command).directory(plan.gameDir.toFile())
-                        .redirectErrorStream(true).redirectOutput(log.toFile()).start();
+                // у каждой одновременно запущенной игры свой лог: первая пишет в -latest, следующие в -latest-2, -3...
+                int n = games.incrementAndGet();
+                Path log = root.resolve("logs").resolve(c.id + "-latest" + (n > 1 ? "-" + n : "") + ".log");
+                Process p;
+                try {
+                    p = new ProcessBuilder(plan.command).directory(plan.gameDir.toFile())
+                            .redirectErrorStream(true).redirectOutput(log.toFile()).start();
+                } catch (Throwable t) { games.decrementAndGet(); throw t; }
                 discord.setPaused(true);
                 SwingUtilities.invokeLater(() -> {
-                    launchBtn.set("Игра запущена", Wv.Glyph.PLAY);
-                    actionBar.status("Игра запущена", Wv.ActionBar.OK);
+                    actionBar.status(n > 1 ? "Запущено игр: " + n : "Игра запущена", Wv.ActionBar.OK);
                     actionBar.progress(false);
-                    frame.setVisible(false);
+                    frame.setState(Frame.ICONIFIED); // не прячем: из панели задач можно запустить ещё одну
                 });
-                int code = p.waitFor();
-                SwingUtilities.invokeLater(() -> {
-                    frame.setVisible(true);
-                    startParticles();
-                    discord.setPaused(false);
-                    if (code != 0) lastError = "Игра завершилась с кодом " + code + ". Лог: " + log;
-                });
+                Thread w = new Thread(() -> {
+                    int code;
+                    try { code = p.waitFor(); } catch (InterruptedException e) { return; }
+                    int left = games.decrementAndGet();
+                    SwingUtilities.invokeLater(() -> {
+                        if (code != 0) lastError = "Игра завершилась с кодом " + code + ". Лог: " + log.getFileName();
+                        if (left == 0) {
+                            discord.setPaused(false);
+                            presence();
+                            frame.setState(Frame.NORMAL);
+                            frame.toFront();
+                        }
+                        refreshReady();
+                    });
+                }, "game-wait");
+                w.setDaemon(true);
+                w.start();
             } catch (Throwable t) {
-                SwingUtilities.invokeLater(() -> lastError = String.valueOf(t.getMessage()));
+                String m = errorText(t);
+                SwingUtilities.invokeLater(() -> lastError = m);
             } finally {
                 SwingUtilities.invokeLater(() -> {
                     busy = false;
-                    discord.setPaused(false);
-                    presence();
+                    if (games.get() == 0) { discord.setPaused(false); presence(); }
                     launchBtn.setEnabled(true);
                     actionBar.progress(false);
                     refreshBuild();
                 });
             }
         }, "launch").start();
+    }
+
+    /** Понятный текст ошибки: у FileSystemException getMessage() — это голый путь к файлу. */
+    private static String errorText(Throwable t) {
+        if (t instanceof java.nio.file.AccessDeniedException e)
+            return "Нет доступа к файлу " + Path.of(e.getFile()).getFileName() + " — закройте игру и повторите";
+        if (t instanceof java.nio.file.NoSuchFileException e)
+            return "Файл не найден: " + Path.of(e.getFile()).getFileName();
+        if (t instanceof java.nio.file.FileSystemException e) {
+            String why = e.getReason() != null ? e.getReason().trim() : "файл занят";
+            return "Файл " + Path.of(e.getFile()).getFileName() + ": " + why;
+        }
+        if (t instanceof java.net.ConnectException || t instanceof java.net.UnknownHostException)
+            return "Нет соединения с сервером загрузки";
+        return t.getMessage() != null ? t.getMessage() : t.toString();
     }
 
     // ---------- скриншоты экранов (для проверки вёрстки) ----------

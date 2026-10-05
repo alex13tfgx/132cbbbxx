@@ -30,7 +30,7 @@ extends Module {
     private final BooleanSetting fill = new BooleanSetting("Заливка", "Полупрозрачная заливка коробки").setValue(true);
     private final BooleanSetting clientColor = new BooleanSetting("Цвет клиента", "Брать цвет из темы").setValue(true);
     private final ColorSetting customColor = new ColorSetting("Цвет хитбокса", "Свой цвет обводки и заливки").value(Color.WHITE.getRGB()).visible(() -> !this.clientColor.isValue());
-    private final SliderSettings lineWidth = new SliderSettings("Толщина линий", "Толщина обводки").setValue(1.0f).range(0.5f, 4.0f).step(0.1f);
+    private final SliderSettings lineWidth = new SliderSettings("Толщина линий", "Толщина обводки").setValue(2.0f).range(1.0f, 6.0f).step(0.1f);
     private final BooleanSetting friendHighlight = new BooleanSetting("Подсвечивать друзей", "Друзья из .friend рисуются отдельным цветом").setValue(true);
     private final ColorSetting friendColor = new ColorSetting("Цвет друзей", "Цвет хитбокса друзей").value(new Color(85, 255, 85).getRGB()).visible(() -> this.friendHighlight.isValue());
 
@@ -64,7 +64,7 @@ extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof LivingEntity) || entity == mc.player && firstPerson) continue;
             if (entity.isInvisible() && entity != mc.player) continue;
-            Box box = entity.getBoundingBox().offset(Calculate.interpolate(entity).subtract(new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getRandomBodyY())));
+            Box box = entity.getBoundingBox().offset(Calculate.interpolate(entity).subtract(entity.getX(), entity.getY(), entity.getZ()));
             if (!Projection.canSee(box)) continue;
             int color = highlightFriends && FriendUtils.isFriend(entity) ? friendRgb : baseColor;
             Render3D.drawBox(box, color, width, true, fillBox, true);

@@ -123,7 +123,6 @@ implements QuickImports {
     }
 
     public static void onWorldRender(WorldRenderEvent e) {
-        Set<Float> widths;
         Set<Identifier> identifiers;
         if (!TEXTURE.isEmpty()) {
             identifiers = TEXTURE.stream().map(texture -> texture.id).collect(Collectors.toCollection(LinkedHashSet::new));
@@ -144,15 +143,7 @@ implements QuickImports {
             TEXTURE_DEPTH.clear();
         }
         if (!LINE.isEmpty()) {
-            GL11.glEnable((int)2881);
-            widths = LINE.stream().map(line -> Float.valueOf(line.width)).collect(Collectors.toCollection(LinkedHashSet::new));
-            widths.forEach(width -> {
-                BufferBuilder lineBuffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR);
-                LINE.stream().filter(line -> line.width == width.floatValue()).forEach(line -> Render3D.vertexLine(line.entry, (VertexConsumer)lineBuffer, line.start.toVector3f(), line.end.toVector3f(), line.colorStart, line.colorEnd));
-                WiosRender.draw(WiosRender.posColor(VertexFormat.DrawMode.LINES, false, false), lineBuffer);
-            });
-            LINE.clear();
-            GL11.glDisable((int)2881);
+            Render3D.flushLines(LINE, false);
         }
         if (!QUAD.isEmpty()) {
             BufferBuilder quadBuffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
@@ -161,15 +152,7 @@ implements QuickImports {
             QUAD.clear();
         }
         if (!LINE_DEPTH.isEmpty()) {
-            GL11.glEnable((int)2881);
-            widths = LINE_DEPTH.stream().map(line -> Float.valueOf(line.width)).collect(Collectors.toCollection(LinkedHashSet::new));
-            widths.forEach(width -> {
-                BufferBuilder lineDepthBuffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR);
-                LINE_DEPTH.stream().filter(line -> line.width == width.floatValue()).forEach(line -> Render3D.vertexLine(line.entry, (VertexConsumer)lineDepthBuffer, line.start.toVector3f(), line.end.toVector3f(), line.colorStart, line.colorEnd));
-                WiosRender.draw(WiosRender.posColor(VertexFormat.DrawMode.LINES, true, false), lineDepthBuffer);
-            });
-            LINE_DEPTH.clear();
-            GL11.glDisable((int)2881);
+            Render3D.flushLines(LINE_DEPTH, true);
         }
         if (!QUAD_DEPTH.isEmpty()) {
             BufferBuilder quadDepthBuffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
@@ -263,12 +246,30 @@ implements QuickImports {
     }
 
     public static void vertexLine(MatrixStack.Entry entry, VertexConsumer buffer, Vector3f start, Vector3f end, int startColor, int endColor) {
+        Render3D.vertexLine(entry, buffer, start, end, startColor, endColor, 1.0f);
+    }
+
+    /** Вершины для {@link WiosRender#lines}: нормаль — направление линии, толщина в пикселях. */
+    public static void vertexLine(MatrixStack.Entry entry, VertexConsumer buffer, Vector3f start, Vector3f end, int startColor, int endColor, float width) {
         if (entry == null) {
             entry = lastWorldSpaceMatrix;
         }
-        Vector3f vec = Render3D.getNormal(start, end);
-        buffer.vertex(entry, start).color(startColor);
-        buffer.vertex(entry, end).color(endColor);
+        Vector3f dir = new Vector3f(end).sub(start);
+        if (dir.lengthSquared() < 1.0E-12f) {
+            return;
+        }
+        dir.normalize();
+        buffer.vertex(entry, start).color(startColor).normal(entry, dir).lineWidth(width);
+        buffer.vertex(entry, end).color(endColor).normal(entry, dir).lineWidth(width);
+    }
+
+    private static void flushLines(List<Line> lines, boolean depth) {
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL_LINE_WIDTH);
+        for (Line line : lines) {
+            Render3D.vertexLine(line.entry, buffer, line.start.toVector3f(), line.end.toVector3f(), line.colorStart, line.colorEnd, Math.max(1.0f, line.width));
+        }
+        WiosRender.draw(WiosRender.lines(depth), buffer);
+        lines.clear();
     }
 
     public static void vertexQuad(MatrixStack.Entry entry, VertexConsumer buffer, Vec3d vec1, Vec3d vec2, Vec3d vec3, Vec3d vec4, int color) {

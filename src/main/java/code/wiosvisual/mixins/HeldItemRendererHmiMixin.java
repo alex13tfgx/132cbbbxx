@@ -1092,7 +1092,7 @@ public abstract class HeldItemRendererHmiMixin {
                         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-15.0f));
                     }
                     if (item.isOf(Items.TORCH)) {
-                        player.world.addParticleClient((ParticleEffect)ParticleTypes.ITEM_SLIME, new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getRandomBodyY()).getX(), new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getRandomBodyY()).getY(), new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getRandomBodyY()).getZ(), 0.1, 0.1, 0.1);
+                        player.world.addParticleClient((ParticleEffect)ParticleTypes.ITEM_SLIME, new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getZ()).getX(), new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getZ()).getY(), new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getZ()).getZ(), 0.1, 0.1, 0.1);
                     }
                     HeldItemRendererAccessor acc = (HeldItemRendererAccessor)((Object)this);
                     acc.invokeRenderItem((LivingEntity)player, item, bl23 ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, !bl23, matrices, vertexConsumers, light);

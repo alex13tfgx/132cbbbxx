@@ -99,7 +99,7 @@ implements QuickImports {
         }
         if (entity != EntityRenderDispatcherMixin.mc.player || !EntityRenderDispatcherMixin.mc.options.getPerspective().equals((Object)Perspective.FIRST_PERSON)) {
             int color = FriendUtils.isFriend(entity) ? ColorAssist.getFriendColor() : ColorAssist.getClientColor();
-            Vec3d offset = Calculate.interpolate(entity).subtract(new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getRandomBodyY()));
+            Vec3d offset = Calculate.interpolate(entity).subtract(new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getZ()));
             Box box = entity.getBoundingBox().offset(offset);
             if (Projection.canSee(box)) {
                 if (entity instanceof LivingEntity) {

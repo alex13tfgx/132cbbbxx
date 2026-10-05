@@ -82,7 +82,7 @@ extends Command {
         if (mc.player == null) {
             return offset;
         }
-        Vec3d p = new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getRandomBodyY());
+        Vec3d p = new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         return (index == 0 ? p.x : index == 1 ? p.y : p.z) + offset;
     }
 

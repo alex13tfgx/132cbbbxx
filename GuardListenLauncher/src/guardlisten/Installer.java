@@ -220,8 +220,14 @@ final class Installer {
         if (modJar != null) {
             Path dst = gameDir.resolve("mods").resolve("wiosvisual.jar");
             if (!Files.exists(dst) || Files.size(dst) != Files.size(modJar)
-                    || Files.getLastModifiedTime(dst).compareTo(Files.getLastModifiedTime(modJar)) < 0)
-                Files.copy(modJar, dst, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+                    || Files.getLastModifiedTime(dst).compareTo(Files.getLastModifiedTime(modJar)) < 0) {
+                try {
+                    Files.copy(modJar, dst, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+                } catch (FileSystemException e) {
+                    // jar занят уже запущенной игрой — запускаем с прежней сборкой, обновится при следующем запуске
+                    if (!Files.isRegularFile(dst)) throw e;
+                }
+            }
         }
 
         // аргументы

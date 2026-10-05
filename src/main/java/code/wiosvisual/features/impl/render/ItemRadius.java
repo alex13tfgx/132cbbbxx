@@ -114,7 +114,7 @@ extends Module {
     private boolean playersInRadius(Vec3d center, double radius) {
         Box box = new Box(center.x - radius, center.y - radius, center.z - radius, center.x + radius, center.y + radius, center.z + radius);
         for (PlayerEntity entity : ItemRadius.mc.world.getEntitiesByClass(PlayerEntity.class, box, player -> true)) {
-            if (entity == ItemRadius.mc.player || !(new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getRandomBodyY()).distanceTo(center) <= radius)) continue;
+            if (entity == ItemRadius.mc.player || !(new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getZ()).distanceTo(center) <= radius)) continue;
             return true;
         }
         return false;

@@ -210,7 +210,9 @@ public class MainMenuScreen extends Screen implements IMinecraft {
         float bob = (float) Math.sin(System.currentTimeMillis() / 900.0) * 1.6F * logoEase;
         float logoSize = 34F;
         float logoY = screenHeight * 0.29F + 24 - 24 * logoEase + bob;
-        RenderUtil.Images.texture(code.wiosvisual.utils.display.render.BackgroundIcons.icon("wm_icon.png"), screenWidth / 2F - logoSize / 2F, logoY, logoSize, logoSize,
+        // оптическое центрирование: «масса» знака (кольцо) левее центра картинки на ~7.4% (центроид x≈109 из 256)
+        float logoX = screenWidth / 2F - logoSize / 2F + logoSize * 0.074F;
+        RenderUtil.Images.texture(code.wiosvisual.utils.display.render.BackgroundIcons.icon("wm_icon.png"), logoX, logoY, logoSize, logoSize,
                 ColorUtil.replAlpha(ColorUtil.client(), logoEase));
 
         Fonts.sf_regular.drawCentered("WiosVisuals", screenWidth / 2,

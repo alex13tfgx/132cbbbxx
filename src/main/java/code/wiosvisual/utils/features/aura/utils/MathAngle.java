@@ -80,7 +80,7 @@ implements QuickImports {
             return false;
         }
         HitResult result = MathAngle.rayTrace(distance, yaw, pitch);
-        Vec3d startPoint = new net.minecraft.util.math.Vec3d(MathAngle.mc.player.getX(), MathAngle.mc.player.getY(), MathAngle.mc.player.getRandomBodyY()).add(0.0, (double)MathAngle.mc.player.getEyeHeight(MathAngle.mc.player.getPose()), 0.0);
+        Vec3d startPoint = new net.minecraft.util.math.Vec3d(MathAngle.mc.player.getX(), MathAngle.mc.player.getY(), MathAngle.mc.player.getZ()).add(0.0, (double)MathAngle.mc.player.getEyeHeight(MathAngle.mc.player.getPose()), 0.0);
         double distancePow2 = Math.pow(distance, 2.0);
         if (result != null) {
             distancePow2 = startPoint.squaredDistanceTo(result.getPos());

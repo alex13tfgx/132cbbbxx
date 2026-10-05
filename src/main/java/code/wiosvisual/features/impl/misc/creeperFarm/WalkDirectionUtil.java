@@ -29,6 +29,6 @@ public class WalkDirectionUtil {
         if (entity == null) {
             throw new NullPointerException("entity is marked non-null but is null");
         }
-        return WalkDirectionUtil.fromVec3d(new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getRandomBodyY()), yaw);
+        return WalkDirectionUtil.fromVec3d(new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getZ()), yaw);
     }
 }

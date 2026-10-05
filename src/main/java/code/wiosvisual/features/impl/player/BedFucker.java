@@ -61,7 +61,7 @@ extends Module {
         }
         this.targetPos = BedFucker.mc.player.getBlockPos();
         int radius = this.radiusSetting.getInt();
-        this.targetPos = PlayerInteractionHelper.getCube(BedFucker.mc.player.getBlockPos(), radius, radius, true).stream().filter(this::isBed).min(Comparator.comparingDouble(p -> p.toCenterPos().squaredDistanceTo(new net.minecraft.util.math.Vec3d(BedFucker.mc.player.getX(), BedFucker.mc.player.getY(), BedFucker.mc.player.getRandomBodyY())))).orElse(null);
+        this.targetPos = PlayerInteractionHelper.getCube(BedFucker.mc.player.getBlockPos(), radius, radius, true).stream().filter(this::isBed).min(Comparator.comparingDouble(p -> p.toCenterPos().squaredDistanceTo(new net.minecraft.util.math.Vec3d(BedFucker.mc.player.getX(), BedFucker.mc.player.getY(), BedFucker.mc.player.getZ())))).orElse(null);
         if (this.targetPos != null) {
             if (this.rotateSetting.isValue()) {
                 TurnsConnection.INSTANCE.rotateTo(MathAngle.calculateAngle(this.targetPos.toCenterPos()), TurnsConfig.DEFAULT, TaskPriority.HIGH_IMPORTANCE_1, this);

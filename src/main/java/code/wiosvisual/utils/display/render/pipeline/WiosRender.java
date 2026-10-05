@@ -73,6 +73,30 @@ public final class WiosRender {
     }
 
     // ------------------------------------------------------------------
+    //  Толстые линии (ванильный core/rendertype_lines). В 1.21.11 DrawMode.LINES рисуется
+    //  треугольниками: шейдер раздвигает каждую пару вершин в полосу по Normal (направление
+    //  линии) и LineWidth. С position_color такие линии вырождаются и не видны вовсе.
+    //  Вершина: vertex(...).color(...).normal(dir).lineWidth(px).
+    // ------------------------------------------------------------------
+    public static RenderLayer lines(boolean depthTest) {
+        String key = "lines|" + depthTest;
+        return LAYERS.computeIfAbsent(key, k -> {
+            RenderPipeline p = base("lines_" + LAYERS.size())
+                    .withUniform("Fog", UniformType.UNIFORM_BUFFER)
+                    .withUniform("Globals", UniformType.UNIFORM_BUFFER)
+                    .withVertexShader("core/rendertype_lines")
+                    .withFragmentShader("core/rendertype_lines")
+                    .withBlend(BlendFunction.TRANSLUCENT)
+                    .withCull(false)
+                    .withDepthTestFunction(depthFn(depthTest))
+                    .withDepthWrite(false)
+                    .withVertexFormat(VertexFormats.POSITION_COLOR_NORMAL_LINE_WIDTH, VertexFormat.DrawMode.LINES)
+                    .build();
+            return makeLayer("wios_lines", p);
+        });
+    }
+
+    // ------------------------------------------------------------------
     //  POSITION  (VertexFormats.POSITION = class_290.field_1592)
     // ------------------------------------------------------------------
     public static RenderLayer position(VertexFormat.DrawMode mode, boolean depthTest, boolean cull) {

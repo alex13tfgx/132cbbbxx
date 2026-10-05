@@ -316,7 +316,7 @@ extends Module {
             } else {
                 continue;
             }
-            Vec3d pos = new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getRandomBodyY());
+            Vec3d pos = new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getZ());
             Vec3d vel = entity.getVelocity();
             this.pushRaw(entity.getId(), this.simulate(pos, vel, gravity, entity, icon), dt);
         }

@@ -26,118 +26,118 @@ public final class HudTheme {
     private static int cachedAccent = -1;
 
     private static Palette active() {
-        return BASE;
+        int accent = HudTheme.themeAccent();
+        if (accent != cachedAccent) {
+            cachedAccent = accent;
+            cached = new Palette(BASE.panel, BASE.panelTop, BASE.panelBottom, BASE.item, BASE.itemSoft, BASE.outline, accent, BASE.text, BASE.muted, BASE.track);
+        }
+        return cached;
     }
 
-    /**
-     * Фиксированный оранжевый акцент бренда (ReallyVisuals) — не зависит от темы клиента.
-     * Используется ClickGui и логотипом ватермарки: они всегда оранжевые, как на референсе.
-     */
-    private static final int FIXED_ACCENT = 0x859CFF;
+    /** Запасной акцент, если тема ещё не загружена. */
+    private static final int FALLBACK_ACCENT = 0x859CFF;
+
+    /** Акцент текущей темы клиента (ThemeEditor → ThemeManager.primaryColor), RGB без альфы. */
+    private static int themeAccent() {
+        try {
+            return ThemeManager.primaryColor.getColor() & 0xFFFFFF;
+        }
+        catch (Throwable ignored) {
+            return FALLBACK_ACCENT;
+        }
+    }
+
+    // Все цвета ниже раньше были захардкожены (0x859CFF) и не менялись вместе с темой.
+    // Теперь иконки, полоски и акценты HUD берут цвет из текущей темы.
 
     public static int fixedAccent(int alpha) {
-        return HudTheme.color(FIXED_ACCENT, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     public static int fixedAccentBright(int alpha) {
-        return HudTheme.color(HudTheme.mix(FIXED_ACCENT, 0xFFFFFF, 0.38f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0xFFFFFF, 0.38f), alpha);
     }
 
     public static int fixedAccentSecondary(int alpha) {
-        return HudTheme.color(HudTheme.mix(FIXED_ACCENT, 0x000000, 0.28f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0x000000, 0.28f), alpha);
     }
 
-    /**
-     * Серый акцент HUD-панелей (Potions/Hot Keys/Cooldowns) — отдельно от оранжевого бренда
-     * ClickGui/ватермарки, по просьбе «сделай весь Hud серым».
-     */
-    private static final int HUD_GRAY = 0x859CFF;
+    /** Акцент HUD-панелей (Potions/Hot Keys/Cooldowns): полоски, бейджи клавиш — цвет темы. */
 
     public static int hudGray(int alpha) {
-        return HudTheme.color(HUD_GRAY, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     public static int hudGrayBright(int alpha) {
-        return HudTheme.color(HudTheme.mix(HUD_GRAY, 0xFFFFFF, 0.35f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0xFFFFFF, 0.35f), alpha);
     }
 
     public static int hudGraySecondary(int alpha) {
-        return HudTheme.color(HudTheme.mix(HUD_GRAY, 0x000000, 0.25f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0x000000, 0.25f), alpha);
     }
 
-    /**
-     * Цветные иконки панелей (Potions/Hot Keys/Cooldowns) — сама иконка своим цветом,
-     * остальной ряд (текст, бейдж) остаётся серым ({@link #hudGray}).
-     */
-    private static final int POTIONS_ICON = 0x859CFF;
-    private static final int HOTKEYS_ICON = 0x859CFF;
-    private static final int COOLDOWNS_ICON = 0x859CFF;
+    /** Иконки панелей Potions/Hot Keys/Cooldowns — цвет темы. */
 
     public static int potionsIcon(int alpha) {
-        return HudTheme.color(POTIONS_ICON, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     public static int potionsIconBright(int alpha) {
-        return HudTheme.color(HudTheme.mix(POTIONS_ICON, 0xFFFFFF, 0.35f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0xFFFFFF, 0.35f), alpha);
     }
 
     public static int potionsIconSecondary(int alpha) {
-        return HudTheme.color(HudTheme.mix(POTIONS_ICON, 0x000000, 0.25f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0x000000, 0.25f), alpha);
     }
 
     public static int hotkeysIcon(int alpha) {
-        return HudTheme.color(HOTKEYS_ICON, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     public static int hotkeysIconBright(int alpha) {
-        return HudTheme.color(HudTheme.mix(HOTKEYS_ICON, 0xFFFFFF, 0.35f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0xFFFFFF, 0.35f), alpha);
     }
 
     public static int hotkeysIconSecondary(int alpha) {
-        return HudTheme.color(HudTheme.mix(HOTKEYS_ICON, 0x000000, 0.25f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0x000000, 0.25f), alpha);
     }
 
     public static int cooldownsIcon(int alpha) {
-        return HudTheme.color(COOLDOWNS_ICON, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     public static int cooldownsIconBright(int alpha) {
-        return HudTheme.color(HudTheme.mix(COOLDOWNS_ICON, 0xFFFFFF, 0.35f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0xFFFFFF, 0.35f), alpha);
     }
 
     public static int cooldownsIconSecondary(int alpha) {
-        return HudTheme.color(HudTheme.mix(COOLDOWNS_ICON, 0x000000, 0.25f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0x000000, 0.25f), alpha);
     }
 
-    // То же самое для остальных HUD-панелей (CremKeys/CustomHotbar/MusicInfo/TargetHud):
-    // свой цветной акцент вместо цвета темы, панель — общий тёмный фон.
-    private static final int CREMKEYS_ICON = 0x859CFF;
-    private static final int HOTBAR_ICON = 0x859CFF;
-    private static final int MUSIC_ICON = 0x859CFF;
-    private static final int TARGET_ICON = 0x859CFF;
+    // То же для остальных HUD-панелей (CremKeys/CustomHotbar/MusicInfo/TargetHud).
 
     public static int cremkeysIcon(int alpha) {
-        return HudTheme.color(CREMKEYS_ICON, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     public static int cremkeysIconBright(int alpha) {
-        return HudTheme.color(HudTheme.mix(CREMKEYS_ICON, 0xFFFFFF, 0.35f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0xFFFFFF, 0.35f), alpha);
     }
 
     public static int hotbarIcon(int alpha) {
-        return HudTheme.color(HOTBAR_ICON, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     public static int musicIcon(int alpha) {
-        return HudTheme.color(MUSIC_ICON, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     public static int musicIconBright(int alpha) {
-        return HudTheme.color(HudTheme.mix(MUSIC_ICON, 0xFFFFFF, 0.35f), alpha);
+        return HudTheme.color(HudTheme.mix(HudTheme.themeAccent(), 0xFFFFFF, 0.35f), alpha);
     }
 
     public static int targetIcon(int alpha) {
-        return HudTheme.color(TARGET_ICON, alpha);
+        return HudTheme.color(HudTheme.themeAccent(), alpha);
     }
 
     /** Второй цвет градиентов — оттенок цвета темы, как {@code ColorAssist.getHudColor2()}. */

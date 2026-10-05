@@ -47,9 +47,6 @@ import code.wiosvisual.features.impl.render.HandShader;
 import code.wiosvisual.features.impl.render.HitColor;
 import code.wiosvisual.features.impl.render.HitMarker;
 import code.wiosvisual.features.impl.render.HitRange;
-import code.wiosvisual.features.impl.misc.ElytraSwap;
-import code.wiosvisual.features.impl.misc.FastSwap;
-import code.wiosvisual.features.impl.misc.ItemSwap;
 import code.wiosvisual.features.impl.misc.NoFriendDamage;
 import code.wiosvisual.features.impl.render.ChinaHat;
 import code.wiosvisual.features.impl.render.Cosmetics;
@@ -80,7 +77,7 @@ public class ModuleRepository {
     private final List<Module> modules = new ArrayList<Module>();
 
     public void setup() {
-        this.register(new ItemPhysic(), new Ambience(), new code.wiosvisual.features.impl.render.InvSpoofer(), new ArrowNames(), new AspectRatio(), new FreeLook(), new ClickFriend(), new Globals(), new ItemScroller(), new Hud(), new HitboxCustomizer(), new ClickGui(), new ThemeEditor(), new AuctionHelper(), new ServerJoiner(), new AutoRespawn(), new BurrowHelper(), new TargetESP(), new TntTimer(), new ViewModel(), new AutoTpAccept(), new NoRender(), new Fullbright(), new BodyGlow(), new BodyOutline(), new BetterWorld(), new ItemRadius(), new AutoAuth(), new Assist(), new Sounds(), new Structures(), new CrossHair(), new HitMarker(), new code.wiosvisual.features.impl.render.HitEffect(), new HitColor(), new HitRange(), new HitSounds(), new ChinaHat(), new Cosmetics(), new MotionBlur(), new ElytraSwap(), new ItemSwap(), new FastSwap(), new NoFriendDamage(), new DeathCoords(), new KillEffect(), new ShulkerBypass(), new SoundsRemove(), new Trajectories(), new DashTrails(), new TapeMouse(), new Wings(), new ShaderSky(), new BlockOverlay(), new HandShader(), new NoHurtCam(), new ShiftTab(), new Zoom(), new Sprint(), new AutoCommand(), new CustomModels(), new TotemPop(), new TotemParticles(), new EventWaypoints(), new AutoInvest(), new AutoClanUpgrade(), new ru.mentions.module.impl.render.JumpCircle(), new ru.mentions.module.impl.render.Particles(), new ru.mentions.module.impl.render.TotemGhost(), new ru.mentions.module.impl.render.FireFlies(), new ru.mentions.module.impl.display.InterFace());
+        this.register(new ItemPhysic(), new Ambience(), new code.wiosvisual.features.impl.render.InvSpoofer(), new ArrowNames(), new AspectRatio(), new FreeLook(), new ClickFriend(), new Globals(), new ItemScroller(), new Hud(), new HitboxCustomizer(), new ClickGui(), new ThemeEditor(), new AuctionHelper(), new ServerJoiner(), new AutoRespawn(), new BurrowHelper(), new TargetESP(), new TntTimer(), new ViewModel(), new AutoTpAccept(), new NoRender(), new Fullbright(), new BodyGlow(), new BodyOutline(), new BetterWorld(), new ItemRadius(), new AutoAuth(), new Assist(), new Sounds(), new Structures(), new CrossHair(), new HitMarker(), new code.wiosvisual.features.impl.render.HitEffect(), new HitColor(), new HitRange(), new HitSounds(), new ChinaHat(), new Cosmetics(), new MotionBlur(), new NoFriendDamage(), new DeathCoords(), new KillEffect(), new ShulkerBypass(), new SoundsRemove(), new Trajectories(), new DashTrails(), new code.wiosvisual.features.impl.render.Trails(), new TapeMouse(), new Wings(), new ShaderSky(), new BlockOverlay(), new HandShader(), new NoHurtCam(), new ShiftTab(), new Zoom(), new Sprint(), new AutoCommand(), new CustomModels(), new TotemPop(), new TotemParticles(), new EventWaypoints(), new AutoInvest(), new AutoClanUpgrade(), new ru.mentions.module.impl.render.JumpCircle(), new ru.mentions.module.impl.render.Particles(), new ru.mentions.module.impl.render.TotemGhost(), new ru.mentions.module.impl.render.FireFlies(), new ru.mentions.module.impl.display.InterFace());
         this.sanitizeBrokenModules();
     }
 

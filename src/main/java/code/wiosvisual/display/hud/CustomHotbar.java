@@ -10,7 +10,6 @@ package code.wiosvisual.display.hud;
 
 import code.wiosvisual.utils.display.render.GuiCompat;
 
-import code.wiosvisual.features.impl.misc.FastSwap;
 
 import code.wiosvisual.common.animation.Animation;
 import code.wiosvisual.common.animation.Direction;
@@ -146,7 +145,6 @@ extends AbstractDraggable {
             ItemStack stack = CustomHotbar.mc.player.getInventory().getStack(i);
             if (!stack.isEmpty()) {
                 Render2D.defaultDrawStack(context, stack, slotX + 2.0f, slotY + 2.0f, true, true, 1.0f);
-                FastSwap.drawBindLabel(context, stack, slotX + 2.0f, slotY + 2.0f);
             } else {
                 String slotNumber = String.valueOf(i + 1);
                 int textAlpha = isSelected ? 200 : 80;

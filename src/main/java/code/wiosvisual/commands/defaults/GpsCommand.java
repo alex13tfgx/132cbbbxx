@@ -115,20 +115,20 @@ extends Command {
         if (mc.player == null) {
             return offset;
         }
-        Vec3d pos = new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getRandomBodyY());
+        Vec3d pos = new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         double base = count == 2 ? (index == 0 ? pos.x : pos.z) : (index == 0 ? pos.x : index == 1 ? pos.y : pos.z);
         return base + offset;
     }
 
     private Vec3d resolvedTarget() {
-        return this.flat ? new Vec3d(this.target.x, new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getRandomBodyY()).y + 1.0, this.target.z) : this.target;
+        return this.flat ? new Vec3d(this.target.x, new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ()).y + 1.0, this.target.z) : this.target;
     }
 
     private double distance() {
         if (mc.player == null) {
             return 0.0;
         }
-        Vec3d pos = new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getRandomBodyY());
+        Vec3d pos = new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         double dx = this.target.x - pos.x;
         double dz = this.target.z - pos.z;
         double dy = this.flat ? 0.0 : this.target.y - pos.y;
@@ -155,7 +155,7 @@ extends Command {
             this.drawWorldMarker(matrix, Math.round(screen[0]), Math.round(screen[1]), distance);
         }
 
-        Vec3d pos = new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getRandomBodyY());
+        Vec3d pos = new net.minecraft.util.math.Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         double targetYaw = Math.toDegrees(Math.atan2(point.z - pos.z, point.x - pos.x)) - 90.0;
         float diff = (float)(((targetYaw - mc.player.getYaw()) % 360.0 + 540.0) % 360.0 - 180.0);
         this.drawPanel(matrix, context.getScaledWindowWidth(), context.getScaledWindowHeight(), distance, diff);

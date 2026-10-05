@@ -147,16 +147,16 @@ QuickImports {
 
     public static PlayerSimulation fromClientPlayer(SimulatedPlayerInput input) {
         ClientPlayerEntity player = PlayerSimulation.mc.player;
-        return new PlayerSimulation((PlayerEntity)player, input, new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getRandomBodyY()), player.getVelocity(), player.getBoundingBox(), player.getYaw(), player.getPitch(), player.isSprinting(), (float)player.fallDistance, player.jumpingCooldown, player.jumping, player.isGliding(), player.isOnGround(), player.horizontalCollision, player.verticalCollision, player.isTouchingWater(), player.isSwimming(), player.isSubmergedInWater(), (Object2DoubleMap<TagKey<Fluid>>)new Object2DoubleArrayMap(player.fluidHeight), new HashSet<TagKey<Fluid>>(player.submergedFluidTag));
+        return new PlayerSimulation((PlayerEntity)player, input, new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getZ()), player.getVelocity(), player.getBoundingBox(), player.getYaw(), player.getPitch(), player.isSprinting(), (float)player.fallDistance, player.jumpingCooldown, player.jumping, player.isGliding(), player.isOnGround(), player.horizontalCollision, player.verticalCollision, player.isTouchingWater(), player.isSwimming(), player.isSubmergedInWater(), (Object2DoubleMap<TagKey<Fluid>>)new Object2DoubleArrayMap(player.fluidHeight), new HashSet<TagKey<Fluid>>(player.submergedFluidTag));
     }
 
     public static PlayerSimulation fromOtherPlayer(PlayerEntity player, SimulatedPlayerInput input) {
-        return new PlayerSimulation(player, input, new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getRandomBodyY()), new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getRandomBodyY()).subtract(new Vec3d(player.lastX, player.lastY, player.lastZ)), player.getBoundingBox(), player.getYaw(), player.getPitch(), player.isSprinting(), (float)player.fallDistance, player.jumpingCooldown, player.jumping, player.isGliding(), player.isOnGround(), player.horizontalCollision, player.verticalCollision, player.isTouchingWater(), player.isSwimming(), player.isSubmergedInWater(), (Object2DoubleMap<TagKey<Fluid>>)new Object2DoubleArrayMap(player.fluidHeight), new HashSet<TagKey<Fluid>>(player.submergedFluidTag));
+        return new PlayerSimulation(player, input, new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getZ()), new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getZ()).subtract(new Vec3d(player.lastX, player.lastY, player.lastZ)), player.getBoundingBox(), player.getYaw(), player.getPitch(), player.isSprinting(), (float)player.fallDistance, player.jumpingCooldown, player.jumping, player.isGliding(), player.isOnGround(), player.horizontalCollision, player.verticalCollision, player.isTouchingWater(), player.isSwimming(), player.isSubmergedInWater(), (Object2DoubleMap<TagKey<Fluid>>)new Object2DoubleArrayMap(player.fluidHeight), new HashSet<TagKey<Fluid>>(player.submergedFluidTag));
     }
 
     @Override
     public Vec3d pos() {
-        return new net.minecraft.util.math.Vec3d(this.player.getX(), this.player.getY(), this.player.getRandomBodyY());
+        return new net.minecraft.util.math.Vec3d(this.player.getX(), this.player.getY(), this.player.getZ());
     }
 
     @Override
@@ -735,7 +735,7 @@ QuickImports {
         }
 
         public static SimulatedPlayerInput guessInput(PlayerEntity entity) {
-            Vec3d velocity = new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getRandomBodyY()).subtract(new Vec3d(entity.lastX, entity.lastY, entity.lastZ));
+            Vec3d velocity = new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getZ()).subtract(new Vec3d(entity.lastX, entity.lastY, entity.lastZ));
             double horizontalVelocity = velocity.horizontalLengthSquared();
             PlayerInput input = new PlayerInput(false, false, false, false, !entity.isOnGround(), entity.isSneaking(), horizontalVelocity >= 0.014641);
             if (horizontalVelocity > 0.0025000000000000005) {

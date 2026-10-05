@@ -29,7 +29,7 @@ public class JumpCircleStorage {
     }
 
     public void add(PlayerEntity player) {
-        this.add(new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getRandomBodyY()).add(0.0, (double)0.01f, 0.0));
+        this.add(new net.minecraft.util.math.Vec3d(player.getX(), player.getY(), player.getZ()).add(0.0, (double)0.01f, 0.0));
     }
 
     public boolean isPresent() {

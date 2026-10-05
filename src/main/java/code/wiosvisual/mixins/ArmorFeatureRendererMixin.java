@@ -19,6 +19,7 @@ package code.wiosvisual.mixins;
 
 import code.wiosvisual.features.impl.render.HitColor;
 import code.wiosvisual.utils.display.interfaces.QuickImports;
+import code.wiosvisual.utils.display.render.state.ILivingStateEntity;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.feature.ArmorFeatureRenderer;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
@@ -42,23 +43,9 @@ implements QuickImports {
         if (ArmorFeatureRendererMixin.mc.world == null) {
             return;
         }
-        LivingEntity living = null;
-        if (state instanceof PlayerEntityRenderState) {
-            PlayerEntityRenderState playerState = (PlayerEntityRenderState)state;
-            Entity entity = ArmorFeatureRendererMixin.mc.world.getEntityById(playerState.id);
-            if (!(entity instanceof PlayerEntity)) {
-                return;
-            }
-            PlayerEntity player = (PlayerEntity)entity;
-            living = player;
-        } else {
-            // У не-игроков в состоянии рендера нет id, поэтому берём существо, которое
-            // EntityRenderDispatcher рисует прямо сейчас — иначе броня мобов не красилась вовсе.
-            Entity current = HitColor.getRenderedEntity();
-            if (!(current instanceof LivingEntity)) {
-                return;
-            }
-            living = (LivingEntity)current;
+        LivingEntity living = ILivingStateEntity.of(state);
+        if (living == null) {
+            return;
         }
         HitColor.beginArmorTint(living, state.hurt);
     }

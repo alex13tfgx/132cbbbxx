@@ -16,8 +16,11 @@ layout(std140) uniform HandFxData {
 in vec2 texCoord;
 out vec4 fragColor;
 
+// Хэш без sin (Dave Hoskins hash12): дешевле и стабилен на любых GPU.
 float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
 }
 
 float noise(vec2 p) {
@@ -28,23 +31,44 @@ float noise(vec2 p) {
                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
+const mat2 FBM_ROT = mat2(0.8, 0.6, -0.6, 0.8);
+
 float fbm(vec2 p) {
     float v = 0.0;
     float a = 0.5;
-    mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
     for (int i = 0; i < 5; i++) {
         v += a * noise(p);
-        p = rot * p * 2.0 + vec2(1.7, 9.2);
+        p = FBM_ROT * p * 2.0 + vec2(1.7, 9.2);
         a *= 0.5;
     }
     return v;
 }
 
+/** fbm на 4 октавы — для полей искажения: пятая октава там не видна. */
+float fbm4(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 4; i++) {
+        v += a * noise(p);
+        p = FBM_ROT * p * 2.0 + vec2(1.7, 9.2);
+        a *= 0.5;
+    }
+    return v;
+}
+
+/** Только глубина: одна выборка. Для соседей этого достаточно. */
+float depthMask(vec2 uv) {
+    return texture(Sampler2, uv).r < 0.99999 ? 1.0 : 0.0;
+}
+
+const vec2 RING[8] = vec2[](
+    vec2(1.0, 0.0), vec2(0.7071, 0.7071), vec2(0.0, 1.0), vec2(-0.7071, 0.7071),
+    vec2(-1.0, 0.0), vec2(-0.7071, -0.7071), vec2(0.0, -1.0), vec2(0.7071, -0.7071));
+
 /** Маска руки: глубина руки (без дыр, даже если цвет предмета совпал с фоном) и разница кадров для сглаженного края. */
-float handMask(vec2 uv) {
-    float depth = texture(Sampler2, uv).r < 0.99999 ? 1.0 : 0.0;
-    float diff = smoothstep(0.004, 0.035, length(texture(Sampler1, uv).rgb - texture(Sampler0, uv).rgb));
-    return max(depth, diff);
+float handMask(vec2 uv, vec4 before, vec4 after) {
+    float diff = smoothstep(0.004, 0.035, length(after.rgb - before.rgb));
+    return max(depthMask(uv), diff);
 }
 
 /** Режим «Переливание»: текущие разводы внутри, яркая кромка и свечение вокруг. */
@@ -54,28 +78,35 @@ vec4 flow(vec4 after, float mask) {
     float opacity = clamp(p0.y, 0.0, 1.0);
     vec3 tint = p1.rgb;
 
-    // Соседи на двух радиусах: минимум — для внутренней кромки, взвешенный максимум — для свечения снаружи.
-    float minN = 1.0;
-    float glow = 0.0;
+    // Соседи на двух радиусах (только глубина): минимум ближнего кольца — внутренняя кромка,
+    // максимум колец — свечение снаружи. Дальнее кольцо проверяется первым: почти весь экран
+    // далеко от руки и выходит отсюда после 8 выборок, не трогая ближнее кольцо и шум.
+    float far = 0.0;
     for (int i = 0; i < 8; i++) {
-        float ang = float(i) * 0.785398;
-        vec2 dir = vec2(cos(ang), sin(ang));
-        float m1 = handMask(texCoord + dir * texel * 1.5);
-        float m2 = handMask(texCoord + dir * texel * 5.0);
+        far = max(far, depthMask(texCoord + RING[i] * texel * 5.0));
+    }
+    if (mask < 0.001 && far < 0.5) {
+        return after;
+    }
+    float minN = 1.0;
+    float near = 0.0;
+    for (int i = 0; i < 8; i++) {
+        float m1 = depthMask(texCoord + RING[i] * texel * 1.5);
         minN = min(minN, m1);
-        glow = max(glow, max(m1, m2 * 0.45));
+        near = max(near, m1);
     }
 
     if (mask < 0.001) {
         // Снаружи предмета: мягкое свечение цвета шейдера.
+        float glow = max(near, far * 0.45);
         return vec4(after.rgb + tint * glow * 0.55 * opacity, after.a);
     }
 
     // Разводы: fbm с двойным искажением координат — медленно текут и переливаются.
     float scale = max(p0.w, 0.05);
     vec2 uv = (texCoord - 0.5) * vec2(p3.x / p3.y, 1.0) * 3.0 / scale;
-    vec2 q = vec2(fbm(uv + vec2(0.0, time * 0.12)), fbm(uv + vec2(5.2, 1.3) - time * 0.10));
-    vec2 r = vec2(fbm(uv + 3.5 * q + vec2(1.7, 9.2) + time * 0.15), fbm(uv + 3.5 * q + vec2(8.3, 2.8) - time * 0.13));
+    vec2 q = vec2(fbm4(uv + vec2(0.0, time * 0.12)), fbm4(uv + vec2(5.2, 1.3) - time * 0.10));
+    vec2 r = vec2(fbm4(uv + 3.5 * q + vec2(1.7, 9.2) + time * 0.15), fbm4(uv + 3.5 * q + vec2(8.3, 2.8) - time * 0.13));
     float v = fbm(uv + 3.0 * r);
 
     vec3 dark = tint * 0.12;
@@ -96,7 +127,7 @@ vec4 flow(vec4 after, float mask) {
 void main() {
     vec4 before = texture(Sampler0, texCoord);
     vec4 after = texture(Sampler1, texCoord);
-    float mask = handMask(texCoord);
+    float mask = handMask(texCoord, before, after);
 
     if (p0.z > 1.5) {
         fragColor = flow(after, mask);

@@ -82,7 +82,7 @@ extends Module {
         if (!this.mobs.isValue() && !(entity instanceof PlayerEntity)) {
             return;
         }
-        Vec3d pos = new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getRandomBodyY());
+        Vec3d pos = new net.minecraft.util.math.Vec3d(entity.getX(), entity.getY(), entity.getZ());
         float radius = Math.max(0.65f, entity.getWidth());
         this.beams.add(new KillBeam(pos.x, pos.y, pos.z, radius));
     }

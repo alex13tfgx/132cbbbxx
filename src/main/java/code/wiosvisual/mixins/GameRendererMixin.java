@@ -172,12 +172,12 @@ public abstract class GameRendererMixin {
      * Имена intermediary и remap=false: в проекте лежит готовый refmap, новых имён в нём нет.
      */
     @Inject(method={"renderWorld(Lnet/minecraft/client/render/RenderTickCounter;)V"}, at={@At(value="INVOKE", target="Lnet/minecraft/client/render/WorldRenderer;render(Lnet/minecraft/client/util/memory/ObjectAllocator;Lnet/minecraft/client/render/RenderTickCounter;ZLnet/minecraft/client/render/Camera;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V", shift=At.Shift.AFTER)})
-    private void wiosvisual$motionBlur(RenderTickCounter tickCounter, CallbackInfo ci) {
+    private void wiosvisual$motionBlur(RenderTickCounter tickCounter, CallbackInfo ci, @Local(ordinal=0) Matrix4f projection, @Local(ordinal=1) Matrix4f view) {
         MotionBlur motionBlur = MotionBlur.getInstance();
         if (motionBlur == null || !motionBlur.isState() || this.client.world == null) {
             return;
         }
-        MotionBlurRenderer.render(motionBlur.blendFactor(), motionBlur.samples());
+        MotionBlurRenderer.render(projection, view, this.client.gameRenderer.getCamera().pos, motionBlur.blendFactor(), motionBlur.samples());
     }
 
     @Inject(method={"renderWorld(Lnet/minecraft/client/render/RenderTickCounter;)V"}, at={@At(value="INVOKE", target="Lnet/minecraft/client/render/GameRenderer;renderHand(FZLorg/joml/Matrix4f;)V", shift=At.Shift.BEFORE)})

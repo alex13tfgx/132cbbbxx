@@ -58,7 +58,7 @@ extends Module {
             if (!(entity instanceof TntEntity)) continue;
             TntEntity tnt = (TntEntity)entity;
             Vec3d pos = tnt.getLerpedPos(tickDelta).add(0.0, 0.5, 0.0);
-            double dist = new net.minecraft.util.math.Vec3d(TntTimer.mc.player.getX(), TntTimer.mc.player.getY(), TntTimer.mc.player.getRandomBodyY()).distanceTo(pos);
+            double dist = new net.minecraft.util.math.Vec3d(TntTimer.mc.player.getX(), TntTimer.mc.player.getY(), TntTimer.mc.player.getZ()).distanceTo(pos);
             if (dist > maxDistance) continue;
             if (!Projection.isInFrontOfCamera(pos)) continue;
             Vec3d screen = Projection.worldSpaceToScreenSpace(pos);

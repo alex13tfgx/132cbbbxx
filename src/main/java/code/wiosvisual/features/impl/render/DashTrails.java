@@ -69,7 +69,7 @@ extends Module {
             this.tickStartPos = null;
             return;
         }
-        Vec3d current = new net.minecraft.util.math.Vec3d(DashTrails.mc.player.getX(), DashTrails.mc.player.getY(), DashTrails.mc.player.getRandomBodyY());
+        Vec3d current = new net.minecraft.util.math.Vec3d(DashTrails.mc.player.getX(), DashTrails.mc.player.getY(), DashTrails.mc.player.getZ());
         if (this.tickStartPos != null) {
             this.handleMovement(this.tickStartPos, current);
         }

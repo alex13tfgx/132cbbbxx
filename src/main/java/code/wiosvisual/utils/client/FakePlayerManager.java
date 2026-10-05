@@ -48,7 +48,7 @@ public final class FakePlayerManager {
         OtherClientPlayerEntity entity = new OtherClientPlayerEntity(FakePlayerManager.mc.world, profile);
         float yawRad = FakePlayerManager.mc.player.getYaw() * (float)Math.PI / 180.0f;
         Vec3d forward = new Vec3d((double)(-MathHelper.sin((float)yawRad)), 0.0, (double)MathHelper.cos((float)yawRad)).normalize();
-        Vec3d pos = new net.minecraft.util.math.Vec3d(FakePlayerManager.mc.player.getX(), FakePlayerManager.mc.player.getY(), FakePlayerManager.mc.player.getRandomBodyY()).add(forward.multiply(2.5));
+        Vec3d pos = new net.minecraft.util.math.Vec3d(FakePlayerManager.mc.player.getX(), FakePlayerManager.mc.player.getY(), FakePlayerManager.mc.player.getZ()).add(forward.multiply(2.5));
         entity.refreshPositionAndAngles(pos.x, FakePlayerManager.mc.player.getY(), pos.z, FakePlayerManager.mc.player.getYaw() + 180.0f, 0.0f);
         entity.headYaw = entity.getYaw();
         entity.bodyYaw = entity.getYaw();

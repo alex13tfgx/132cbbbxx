@@ -19,7 +19,6 @@
  */
 package code.wiosvisual.mixins;
 
-import code.wiosvisual.features.impl.misc.FastSwap;
 import code.wiosvisual.features.impl.render.CrossHair;
 import code.wiosvisual.features.impl.render.Hud;
 import code.wiosvisual.features.impl.render.NoRender;
@@ -145,19 +144,6 @@ implements QuickImports {
                 if (!Hud.interfaceSettings.isSelected("CustomHotbar")) break block2;
             }
             ci.cancel();
-        }
-    }
-
-    /** Подписи кнопок FastSwap над предметами ванильного хотбара. */
-    @Inject(method={"renderHotbar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V"}, at={@At(value="TAIL")})
-    private void wiosvisual$fastSwapBindLabels(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
-        if (this.client.player == null) {
-            return;
-        }
-        int left = context.getScaledWindowWidth() / 2 - 90;
-        int top = context.getScaledWindowHeight() - 16 - 3;
-        for (int i = 0; i < 9; ++i) {
-            FastSwap.drawBindLabel(context, this.client.player.getInventory().getStack(i), left + i * 20 + 2 - 1, top);
         }
     }
 

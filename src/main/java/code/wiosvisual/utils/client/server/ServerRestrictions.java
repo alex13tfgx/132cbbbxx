@@ -48,7 +48,6 @@ implements QuickImports {
                     Set.of(
                             "NoFriendDamage",   // Don't hit teammates
                             "TapeMouse",        // AutoAttack
-                            "ItemSwap",         // ItemSwap
                             "Assist",           // Firework Helper и аналоги: предмет из инвентаря по кнопке
                             "ItemScroller",     // InventoryControlTweaks / Quickstack / Inventory Profiles Next
                             "ShulkerBypass",    // то же: перекладывание из хранилища по кнопке
@@ -57,22 +56,33 @@ implements QuickImports {
                     Set.of(Feature.REMOVE_BAD_EFFECTS, Feature.REMOVE_DARKNESS, Feature.FRIEND_HIGHLIGHT)),
             new Rules("ReallyWorld",
                     Set.of("reallyworld.ru", "rwdonate.ru"),
-                    Set.of(
-                            "ElytraSwap",       // ElytraSwap
-                            "ItemSwap"),        // ArmorHotSwap / Inventory Totem
+                    Set.of(),
                     Set.of(Feature.REMOVE_VEGETATION)),   // Grass Bypass
             new Rules("CakeWorld",
                     Set.of("cakeworld.pw"),
                     Set.of(
-                            "ElytraSwap",       // прямо назван: «Feather Client — Elytra Swap»
                             "TapeMouse",        // автокликер в ПВП
                             "Assist",           // макросы, дающие преимущество в ПВП
-                            "ItemSwap",
-                            "FastSwap",
                             "ShiftTab",
                             "ShulkerBypass",    // автовзаимодействие с хранилищем (ItemScroller разрешён)
                             "BodyGlow"),        // ESP: подсветка игроков
-                    Set.of()));
+                    Set.of()),
+            // HolyWorld, п. 2.4 правил (Лайт и Прайм анархии): wiki.holyworld.me/lite/rules, /prime/rules.
+            // Работает и без ответа LiteAPI; блок-лист Feature Control, если придёт, добавится сверху.
+            new Rules("HolyWorld",
+                    Set.of("holyworld.ru", "holyworld.me"),
+                    Set.of(
+                            "Trajectories",     // прямо назван: «Trajectories/Predict»
+                            "TapeMouse",        // автокликер в ПВП
+                            "ShiftTab",         // ПВП-макрос: присед в момент удара
+                            "BodyGlow",         // ESP: подсветка игроков
+                            "Assist",           // макросы: /fix, авто-закрытие меню, предметы по бинду
+                            "ShulkerBypass",    // автовзаимодействие с хранилищем (ItemScroller разрешён)
+                            "AutoClanUpgrade",  // макрос: ставит и ломает факел
+                            "AutoInvest",       // автоматизация действий по порогу баланса
+                            "AutoCommand",      // скрипт: команды по таймеру
+                            "AutoTpAccept"),    // сценарий, реагирующий на окружение (запросы в чате)
+                    Set.of(Feature.REMOVE_BAD_EFFECTS, Feature.REMOVE_DARKNESS, Feature.REMOVE_VEGETATION)));
 
     private static final ServerRestrictions INSTANCE = new ServerRestrictions();
 
@@ -185,9 +195,38 @@ implements QuickImports {
                 turnedOff.add(module.getVisibleName());
             }
         }
-        if (rules != null && rulesChanged && !turnedOff.isEmpty()) {
-            mc.player.sendMessage(Text.literal("§7[Wios] §fЗапрещено правилами " + rules.name() + ", отключено: §c" + String.join(", ", turnedOff)), false);
+        if (rules != null && rulesChanged) {
+            // Пишем весь список убранного, а не только то, что было включено.
+            List<String> hidden = new ArrayList<>();
+            for (Module module : ServerRestrictions.allModules()) {
+                if (rules.modules().contains(module.getName())) {
+                    hidden.add(module.getVisibleName());
+                }
+            }
+            if (!hidden.isEmpty() || !rules.features().isEmpty()) {
+                String msg = "§7[Wios] §fПо правилам " + rules.name() + " убрано: §c" + String.join(", ", hidden);
+                if (!rules.features().isEmpty()) {
+                    msg += (hidden.isEmpty() ? "" : "§f; ") + "§fв NoRender отключено: §c" + featureNames(rules.features());
+                }
+                if (!turnedOff.isEmpty()) {
+                    msg += "§7 (выключено: " + String.join(", ", turnedOff) + ")";
+                }
+                mc.player.sendMessage(Text.literal(msg), false);
+            }
         }
+    }
+
+    private static String featureNames(Set<Feature> features) {
+        List<String> names = new ArrayList<>();
+        for (Feature feature : features) {
+            names.add(switch (feature) {
+                case REMOVE_BAD_EFFECTS -> "плохие эффекты";
+                case REMOVE_DARKNESS -> "тьма";
+                case REMOVE_VEGETATION -> "растительность";
+                case FRIEND_HIGHLIGHT -> "подсветка друзей";
+            });
+        }
+        return String.join(", ", names);
     }
 
     private static List<Module> allModules() {

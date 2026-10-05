@@ -165,7 +165,7 @@ public class MoveUtil {
         if (MoveUtil.mc.player == null) {
             return Vec3d.ZERO;
         }
-        Vec3d pos = new net.minecraft.util.math.Vec3d(MoveUtil.mc.player.getX(), MoveUtil.mc.player.getY(), MoveUtil.mc.player.getRandomBodyY());
+        Vec3d pos = new net.minecraft.util.math.Vec3d(MoveUtil.mc.player.getX(), MoveUtil.mc.player.getY(), MoveUtil.mc.player.getZ());
         Vec3d velocity = MoveUtil.mc.player.getVelocity();
         for (int i = 0; i < ticks; ++i) {
             pos = pos.add(velocity);

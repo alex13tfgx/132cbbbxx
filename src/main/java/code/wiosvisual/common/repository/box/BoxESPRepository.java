@@ -60,7 +60,7 @@ QuickLogger {
         PlayerInteractionHelper.streamEntities().filter(ent -> this.entities.containsKey(ent.getType()) && ent != BoxESPRepository.mc.player).forEach(ent -> {
             int entityColor = this.entities.get(ent.getType());
             int color = entityColor == 0 ? ColorAssist.getClientColor() : entityColor;
-            Box box = ent.getBoundingBox().offset(Calculate.interpolate(ent).subtract(new net.minecraft.util.math.Vec3d(ent.getX(), ent.getY(), ent.getRandomBodyY())));
+            Box box = ent.getBoundingBox().offset(Calculate.interpolate(ent).subtract(new net.minecraft.util.math.Vec3d(ent.getX(), ent.getY(), ent.getZ())));
             if (Projection.canSee(box)) {
                 Render3D.drawBox(box, color, 1.0f);
             }

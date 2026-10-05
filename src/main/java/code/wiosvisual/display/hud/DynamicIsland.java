@@ -390,8 +390,6 @@ extends AbstractDraggable {
      */
     /** Точь-в-точь капсула ReallyVisuals: сплошной почти-чёрный фон, без оттенка темы. */
     private static final int MW_PILL_FILL = 170 << 24 | 0x111221;
-    /** Цвет лого ватермарки — фиксированный оранжевый (HudTheme.FIXED_ACCENT), не переливание темы. */
-    private static final int MW_LOGO_COLOR = HudTheme.fixedAccent(255);
 
     private void mwPill(MatrixStack matrices, float x, float y, float width) {
         rectangle.render(ShapeProperties.create(matrices, x, y, width, MW_H).round(MW_ROUND).softness(2.0f)
@@ -586,8 +584,8 @@ extends AbstractDraggable {
 
         float cx = x + MW_PAD;
         if (showLogo) {
-            // Референс: логотип статичного оранжевого цвета, без переливания темы.
-            cx = this.mwVectorLogo(matrices, cx, y, MW_LOGO, MW_LOGO_COLOR);
+            // Логотип и иконки ватермарки — цвет текущей темы.
+            cx = this.mwVectorLogo(matrices, cx, y, MW_LOGO, HudTheme.fixedAccent(255));
         }
         if (showLogo && (showTitle || showNick || !statValues.isEmpty())) {
             cx += MW_LOGO_GAP;
@@ -619,7 +617,7 @@ extends AbstractDraggable {
                 this.mwDot(matrices, cx, y);
                 cx += MW_DOT + MW_DOT_GAP;
             }
-            cx = this.mwIcon(context, statIcons.get(i), cx, y, MW_ICON, MW_LOGO_COLOR) + MW_ICON_GAP;
+            cx = this.mwIcon(context, statIcons.get(i), cx, y, MW_ICON, HudTheme.fixedAccent(255)) + MW_ICON_GAP;
             cx = this.mwText(matrices, statFont, statValues.get(i), cx, y, MW_TEXT);
         }
         Rectangle.flushPending();

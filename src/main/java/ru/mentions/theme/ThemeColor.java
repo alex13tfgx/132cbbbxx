@@ -11,8 +11,11 @@ public final class ThemeColor {
 
     /** Акцент выбранной темы Wios (ThemeEditor меняет ThemeManager.primaryColor). */
     private static int accent() {
-        // Фиолетовый акцент HUD, как на референсе (PulseVisuals): не зависит от выбранной темы.
-        return 0xFF8A63FF;
+        try {
+            return 0xFF000000 | ThemeManager.primaryColor.getColor();
+        } catch (Throwable ignored) {
+            return 0xFF8A63FF; // тема ещё не загружена
+        }
     }
 
     public static int getVisualColor() {

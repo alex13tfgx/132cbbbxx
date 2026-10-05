@@ -53,7 +53,7 @@ implements QuickImports {
 
     public static Rotation from(PlayerEntity player, Entity target) {
         Vec3d playerPos = player.getCameraPosVec(0.0f);
-        Vec3d targetPos = new net.minecraft.util.math.Vec3d(target.getX(), target.getY(), target.getRandomBodyY()).add(0.0, (double)target.getHeight() * 0.5, 0.0);
+        Vec3d targetPos = new net.minecraft.util.math.Vec3d(target.getX(), target.getY(), target.getZ()).add(0.0, (double)target.getHeight() * 0.5, 0.0);
         double dx = targetPos.x - playerPos.x;
         double dy = targetPos.y - playerPos.y;
         double dz = targetPos.z - playerPos.z;
