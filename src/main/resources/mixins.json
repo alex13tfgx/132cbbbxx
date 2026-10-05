@@ -55,6 +55,7 @@
     "accessor.FontManagerAccessor",
     "DebugHudMixin",
     "DrawContextMixin",
+    "ItemCooldownManagerMixin",
     "FogRendererMixin",
     "ViewModelMixin",
     "EntityGlowMixin",

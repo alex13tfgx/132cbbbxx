@@ -58,16 +58,16 @@ final class ModsPanel extends Ui.Screen {
         setOpaque(false);
         setBounds(x, 0, w, h);
 
-        JLabel title = Ui.label("Модификаторы", Ui.font(Font.BOLD, 22f), Ui.TEXT, SwingConstants.LEFT);
-        title.setBounds(cx, 28, 220, 40);
+        JLabel title = Ui.label("Моды", Ui.font(Font.BOLD, 26f), Ui.TEXT, SwingConstants.LEFT);
+        title.setBounds(cx, 26, 220, 40);
         add(title);
 
         tabCatalog = new Ui.Link("Каталог", () -> switchTab(false));
         tabInstalled = new Ui.Link("Установленные", () -> switchTab(true));
         tabCatalog.setFont(Ui.font(Font.BOLD, 15f));
         tabInstalled.setFont(Ui.font(Font.BOLD, 15f));
-        tabCatalog.setBounds(cx + 250, 38, 80, 22);
-        tabInstalled.setBounds(cx + 340, 38, 130, 22);
+        tabCatalog.setBounds(cx + 110, 38, 80, 22);
+        tabInstalled.setBounds(cx + 200, 38, 130, 22);
         add(tabCatalog);
         add(tabInstalled);
 
@@ -122,7 +122,7 @@ final class ModsPanel extends Ui.Screen {
         return scrollActive;
     }
 
-    private static final class ThinBar extends BasicScrollBarUI {
+    static final class ThinBar extends BasicScrollBarUI {
         @Override protected JButton createDecreaseButton(int o) { return zero(); }
         @Override protected JButton createIncreaseButton(int o) { return zero(); }
         private static JButton zero() { JButton b = new JButton(); b.setPreferredSize(new Dimension(0, 0)); return b; }

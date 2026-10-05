@@ -12,8 +12,12 @@ import java.util.List;
 
 /** GuardListen Launcher — запускает клиенты (Wios и др.) на Fabric. */
 public final class Main {
-    static final int AUTH_W = 500, AUTH_H = 560, APP_W = 1060, APP_H = 680, SIDE = 250, M = 44, CW = AUTH_W - 2 * M;
-    static final int CX = 48, CWD = APP_W - SIDE - 2 * CX;
+    static final int AUTH_W = 500, AUTH_H = 560, APP_W = 1180, APP_H = 740, TB = 52, M = 44, CW = AUTH_W - 2 * M;
+    /** Боковая панель и панель содержимого (под заголовком окна). */
+    static final int GAP = 20, BODY_Y = TB + 18, BODY_H = APP_H - BODY_Y - GAP, SIDE_X = GAP, SIDE_W = 262;
+    static final int CONT_X = SIDE_X + SIDE_W + 18, CONT_W = APP_W - CONT_X - GAP;
+    static final int CX = 32, CWD = CONT_W - 2 * CX;
+    static final String LAUNCHER_VERSION = "1.0 Beta";
     private int W = AUTH_W, H = AUTH_H;
 
     private final Path appDir = detectAppDir();
@@ -24,17 +28,21 @@ public final class Main {
 
     private JFrame frame;
     private LayeredRoot rootPanel;
-    private Ui.Screen authScreen, appScreen, homeScreen, clientsScreen, settingsScreen, accountScreen;
-    private Ui.NavItem[] nav;
-    private JPanel clientList;
+    private Ui.Screen authScreen, versionScreen, appScreen, homeScreen, settingsScreen, accountScreen;
+    private Wv.Nav[] nav;
+    private Wv.Panel contentPanel;
     private ModsPanel modsScreen;
+    private PacksPanel packsScreen;
+    private Wv.TitleBar titleBar;
+    private Wv.Profile profile;
+    private Wv.SubCard subCard;
+    private BufferedImage deepIcon, monoIcon;
     private Ui.Screen transFrom, transTo;
     private Anim.Ticker transTicker;
-    private JLabel sideName, sideRole, accName, accRole, accLogin;
-    private Ui.Avatar sideAvatar, accAvatar;
+    private JLabel accName, accRole, accLogin;
+    private Ui.Avatar accAvatar;
     private Ui.AvatarChoice[] choices;
     private BufferedImage customAvatar;
-    private Ui.IconBtn closeBtn;
     private int clientIdx;
     private boolean registerMode, busy;
 
@@ -44,11 +52,12 @@ public final class Main {
     private Ui.GradButton authBtn;
     private Ui.Link switchLink, forgotLink;
     // main
-    private JTextArea desc;
-    private JLabel clientTitle, status, buildLabel;
+    private Wv.InfoGrid infoGrid, clientGrid;
+    private JLabel buildLabel;
     private volatile long shownBuild = -1;
-    private Ui.GradButton launchBtn;
-    private Ui.Bar bar;
+    private Wv.ActionBar actionBar;
+    private Wv.LightButton launchBtn;
+    private String lastError;
     // settings
     private Ui.Field nickField;
     private JLabel ramLabel;
@@ -87,7 +96,7 @@ public final class Main {
             SwingUtilities.invokeAndWait(() -> m.frame.setAlwaysOnTop(true));
             Files.createDirectories(Path.of(args[1]));
             Robot r = new Robot();
-            for (String scr : new String[]{"home", "clients", "mods", "settings", "account"}) {
+            for (String scr : new String[]{"versions", "home", "mods", "packs", "settings", "account"}) {
                 SwingUtilities.invokeAndWait(() -> m.show(scr));
                 Thread.sleep(scr.equals("mods") ? 5000 : 900);
                 Rectangle[] b = new Rectangle[1];
@@ -153,49 +162,12 @@ public final class Main {
     private Ui.Chip[] rpcChips, fpsChips;
     private String screenName = "home";
     private Ui.Chip[] partChips;
-    private BufferedImage logo, logo36, logo32, logo40, bgSrc;
-    private final Map<Integer, BufferedImage> bgCache = new HashMap<>();
+    private BufferedImage logo, logo28;
 
-    /** Фон по принципу "cover", заранее отмасштабированный под размер окна (с учётом масштаба экрана). */
-    private BufferedImage background(int w, int h) {
-        if (bgSrc == null) return null;
-        return bgCache.computeIfAbsent(w * 10000 + h, k -> {
-            double dpi = Ui.dpi();
-            int pw = (int) Math.ceil(w * dpi), ph = (int) Math.ceil(h * dpi);
-            double sc = Math.max((double) pw / bgSrc.getWidth(), (double) ph / bgSrc.getHeight());
-            int iw = (int) Math.ceil(bgSrc.getWidth() * sc), ih = (int) Math.ceil(bgSrc.getHeight() * sc);
-            BufferedImage src = bgSrc;
-            while (src.getWidth() / 2 >= iw) { // ступенчатое уменьшение: быстро и без «лесенки»
-                BufferedImage half = new BufferedImage(src.getWidth() / 2, src.getHeight() / 2, BufferedImage.TYPE_INT_RGB);
-                Graphics2D hg = half.createGraphics();
-                hg.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                hg.drawImage(src, 0, 0, half.getWidth(), half.getHeight(), null);
-                hg.dispose();
-                src = half;
-            }
-            BufferedImage out = new BufferedImage(pw, ph, BufferedImage.TYPE_INT_RGB);
-            Graphics2D g = out.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            g.drawImage(src, (pw - iw) / 2, (ph - ih) / 2, iw, ih, null);
-            g.setColor(new Color(0, 0, 0, 40));
-            g.fillRect(0, 0, pw, ph);
-            g.dispose();
-            return out;
-        });
-    }
-
-    /** Нижние слои окна: заливка, фоновая картинка, частицы. */
+    /** Нижние слои окна: чёрная заливка и частицы. */
     private void paintBackdrop(Graphics2D g, int w, int h) {
-        g.setColor(Ui.BG);
+        g.setColor(Wv.WIN);
         g.fillRect(0, 0, w, h);
-        BufferedImage bg = background(W, H);
-        if (bg != null) {
-            Graphics2D bgG = (Graphics2D) g.create();
-            bgG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            bgG.drawImage(bg, 0, 0, W, H, null);
-            bgG.dispose();
-        }
         particles.paint(g, W, H);
     }
 
@@ -224,36 +196,43 @@ public final class Main {
         particles.setKind(Particles.Kind.of(Json.str(settings, "particles")));
         javax.imageio.ImageIO.scanForPlugins();
         try { logo = javax.imageio.ImageIO.read(Main.class.getResource("/icon.png")); } catch (Exception ignored) { }
-        if (logo != null) { logo36 = Ui.roundIcon(logo, 36, 10); logo32 = Ui.roundIcon(logo, 32, 8); logo40 = Ui.roundIcon(logo, 40, 10); }
-        try { bgSrc = javax.imageio.ImageIO.read(Main.class.getResource("/background.png")); } catch (Exception ignored) { }
+        if (logo != null) {
+            deepIcon = Wv.deepIcon(logo, 92, 20, true);
+            monoIcon = Wv.deepIcon(logo, 92, 20, true);
+            logo28 = Ui.roundIcon(deepIcon, 28, 8);
+            Ui.Avatar.fallback = deepIcon;
+        }
         rootPanel = new LayeredRoot(this::paintBackdrop);
-        // фон для обоих размеров окна готовится заранее в фоне, а не в момент отрисовки
-        Thread bgThread = new Thread(() -> { background(AUTH_W, AUTH_H); background(APP_W, APP_H); }, "gl-bg");
-        bgThread.setDaemon(true);
-        bgThread.start();
         rootPanel.setOpaque(true);
+        clientIdx = initialClient();
 
         authScreen = screen(0, 0, AUTH_W, AUTH_H);
+        versionScreen = screen(0, TB, APP_W, APP_H - TB);
         appScreen = screen(0, 0, APP_W, APP_H);
-        homeScreen = screen(SIDE, 0, APP_W - SIDE, APP_H);
-        clientsScreen = screen(SIDE, 0, APP_W - SIDE, APP_H);
-        settingsScreen = screen(SIDE, 0, APP_W - SIDE, APP_H);
-        accountScreen = screen(SIDE, 0, APP_W - SIDE, APP_H);
+        contentPanel = new Wv.Panel(20);
+        contentPanel.setBounds(CONT_X, BODY_Y, CONT_W, BODY_H);
+        homeScreen = screen(0, 0, CONT_W, BODY_H);
+        settingsScreen = screen(0, 0, CONT_W, BODY_H);
+        accountScreen = screen(0, 0, CONT_W, BODY_H);
         buildAuth();
+        buildVersions();
         buildSidebar();
         buildHome();
-        buildClients();
         buildSettings();
         buildAccount();
-        modsScreen = new ModsPanel(root, () -> clients.get(clientIdx), SIDE, APP_W - SIDE, APP_H, CX, CWD);
+        modsScreen = new ModsPanel(root, () -> clients.get(clientIdx), 0, CONT_W, BODY_H, CX, CWD);
         modsScreen.setVisible(false);
-        for (JPanel p : List.of(homeScreen, clientsScreen, modsScreen, settingsScreen, accountScreen)) appScreen.add(p);
+        packsScreen = new PacksPanel(root, () -> clients.get(clientIdx), CONT_W, BODY_H, CX, CWD);
+        packsScreen.setVisible(false);
+        for (JPanel p : List.of(homeScreen, modsScreen, packsScreen, settingsScreen, accountScreen)) contentPanel.add(p);
+        appScreen.add(contentPanel);
         rootPanel.add(authScreen);
+        rootPanel.add(versionScreen);
         rootPanel.add(appScreen);
 
-        closeBtn = new Ui.IconBtn(Ui.Icon.CLOSE, () -> System.exit(0));
-        rootPanel.add(closeBtn);
-        rootPanel.setComponentZOrder(closeBtn, 0);
+        titleBar = new Wv.TitleBar(logo28, "WiosVisuals", () -> frame.setState(Frame.ICONIFIED), () -> System.exit(0));
+        rootPanel.add(titleBar);
+        rootPanel.setComponentZOrder(titleBar, 0);
         applySize(false);
     }
 
@@ -271,12 +250,12 @@ public final class Main {
         W = nw;
         H = nh;
         rootPanel.setSize(W, H);
-        closeBtn.setBounds(W - 52, 18, 30, 30);
+        titleBar.setBounds(0, 0, W, TB);
         if (frame != null) {
             Rectangle b = frame.getBounds();
             int cx = b.x + b.width / 2, cy = b.y + b.height / 2;
             frame.setBounds(cx - W / 2, cy - H / 2, W, H);
-            if (System.getProperty("gl.noshape") == null) frame.setShape(new RoundRectangle2D.Float(0, 0, W, H, 22, 22));
+            if (System.getProperty("gl.noshape") == null) frame.setShape(new RoundRectangle2D.Float(0, 0, W, H, 18, 18));
             frame.validate();
         }
     }
@@ -342,86 +321,119 @@ public final class Main {
         pass2Field.input.setText("");
         registerMode = false;
         layoutAuth();
-        show("home");
+        show("versions");
+    }
+
+    // ----- выбор версии -----
+    /** Сохранённый выбор клиента, если он доступен, иначе первый доступный. */
+    private int initialClient() {
+        String id = Json.str(settings, "client");
+        int first = 0;
+        for (int i = clients.size() - 1; i >= 0; i--) {
+            if (!clients.get(i).available) continue;
+            first = i;
+            if (clients.get(i).id.equals(id)) return i;
+        }
+        return first;
+    }
+
+    private void buildVersions() {
+        int w = APP_W;
+        JLabel t = Ui.label("Выберите версию", Wv.heavy(38f), Wv.TEXT, SwingConstants.CENTER);
+        t.setBounds(0, 104, w, 52);
+        JLabel sub = Ui.label("Выберите сборку клиента, с которой хотите продолжить.", Wv.plain(15.5f), new Color(0xA3AAB3), SwingConstants.CENTER);
+        sub.setBounds(0, 160, w, 24);
+        versionScreen.add(t);
+        versionScreen.add(sub);
+        int n = clients.size(), gap = 8; // у карточек свой отступ 8 px под свечение
+        int cw = Math.min(486, (w - 120 - gap * (n - 1)) / n), ch = 316;
+        int x0 = (w - (cw * n + gap * (n - 1))) / 2;
+        for (int i = 0; i < n; i++) {
+            int idx = i;
+            Client c = clients.get(i);
+            Wv.VersionCard card = new Wv.VersionCard(c, c.available ? deepIcon : monoIcon, () -> {
+                if (busy) return;
+                clientIdx = idx;
+                settings.put("client", clients.get(idx).id);
+                saveSettings();
+                show("home");
+            });
+            card.setBounds(x0 + i * (cw + gap), 214, cw, ch);
+            versionScreen.add(card);
+        }
+        Wv.InfoPill pill = new Wv.InfoPill("Для запуска выберите доступную версию клиента");
+        int pw = pill.prefWidth();
+        pill.setBounds((w - pw) / 2, 566, pw, 40);
+        versionScreen.add(pill);
     }
 
     // ----- боковое меню -----
-    private static final String[][] NAV = {{"home", "Главная"}, {"clients", "Клиенты"}, {"mods", "Модификаторы"}, {"settings", "Настройки"}, {"account", "Аккаунт"}};
+    private static final String[][] NAV = {{"home", "Главная"}, {"mods", "Моды"}, {"packs", "Ресурспаки"}, {"settings", "Настройки"}};
+    private static final Wv.Glyph[] NAV_GLYPH = {Wv.Glyph.DOT, Wv.Glyph.DIAMOND, Wv.Glyph.GRID, Wv.Glyph.GEAR};
 
     private void buildSidebar() {
-        JLabel brand = Ui.label("GuardListen", Ui.font(Font.BOLD, 17f), Ui.TEXT, SwingConstants.LEFT);
-        brand.setBounds(68, 28, 130, 40);
-        JPanel side = new JPanel(null) {
-            @Override protected void paintComponent(Graphics g) {
-                g.setColor(new Color(0, 0, 0, 90));
-                g.fillRect(0, 0, SIDE, getHeight());
-                g.setColor(new Color(255, 255, 255, 28));
-                g.fillRect(SIDE - 1, 0, 1, getHeight());
-            }
-        };
-        side.setOpaque(false);
-        side.setBounds(0, 0, SIDE, APP_H);
+        Wv.Panel side = new Wv.Panel(20);
+        side.setBounds(SIDE_X, BODY_Y, SIDE_W, BODY_H);
         appScreen.add(side);
-        Ui.Avatar logoIcon = new Ui.Avatar() {
-            @Override protected void paintComponent(Graphics g0) {
-                if (logo36 != null) g0.drawImage(logo36, 0, 0, 36, 36, null);
-            }
-        };
-        logoIcon.setBounds(20, 30, 36, 36);
-        side.add(logoIcon);
-        side.add(brand);
+        int iw = SIDE_W - 24;
+        profile = new Wv.Profile(() -> show("account"));
+        profile.setBounds(12, 12, iw, 76);
+        side.add(profile);
+        JComponent div1 = divider();
+        div1.setBounds(24, 98, SIDE_W - 48, 1);
+        side.add(div1);
+        subCard = new Wv.SubCard();
+        subCard.setBounds(14, 114, SIDE_W - 28, 124);
+        side.add(subCard);
 
-        nav = new Ui.NavItem[NAV.length];
+        nav = new Wv.Nav[NAV.length];
+        int y = 256;
         for (int i = 0; i < NAV.length; i++) {
             String id = NAV[i][0];
-            nav[i] = new Ui.NavItem(NAV[i][1], () -> show(id));
-            nav[i].setBounds(14, 100 + i * 46, SIDE - 28, 40);
+            if (id.equals("settings")) { // настройки отделены чертой
+                JComponent d = divider();
+                d.setBounds(24, y + 8, SIDE_W - 48, 1);
+                side.add(d);
+                y += 22;
+            }
+            nav[i] = new Wv.Nav(NAV[i][1], NAV_GLYPH[i], () -> show(id));
+            nav[i].setBounds(12, y, iw, 50);
             side.add(nav[i]);
+            y += 58;
         }
+        Wv.OutlineBtn out = new Wv.OutlineBtn("Выйти", Wv.Glyph.EXIT, () -> { accounts.logout(); show("auth"); });
+        out.setBounds(14, BODY_H - 14 - 50, SIDE_W - 28, 50);
+        side.add(out);
+    }
 
-        sideAvatar = new Ui.Avatar();
-        sideAvatar.setBounds(18, APP_H - 70, 44, 44);
-        sideName = Ui.label("", Ui.font(Font.BOLD, 14f), Ui.TEXT, SwingConstants.LEFT);
-        sideName.setBounds(72, APP_H - 68, 130, 22);
-        sideRole = Ui.label("", Ui.font(Font.BOLD, 12f), Ui.ORANGE, SwingConstants.LEFT);
-        sideRole.setBounds(72, APP_H - 46, 130, 18);
-        side.add(sideAvatar);
-        side.add(sideName);
-        side.add(sideRole);
+    private static JComponent divider() {
+        return new JComponent() {
+            @Override protected void paintComponent(Graphics g) {
+                g.setColor(new Color(255, 255, 255, 22));
+                g.fillRect(0, 0, getWidth(), 1);
+            }
+        };
     }
 
     // ----- главная -----
     private void buildHome() {
-        clientTitle = Ui.label("", Ui.font(Font.BOLD, 22f), Ui.TEXT, SwingConstants.LEFT);
-        clientTitle.setBounds(CX, 28, CWD - 40, 40);
-        if (logo != null) {
-            clientTitle.setIcon(new ImageIcon(logo32) {
-                @Override public int getIconWidth() { return 32; }
-                @Override public int getIconHeight() { return 32; }
-                @Override public void paintIcon(Component c, Graphics g, int x, int y) { g.drawImage(logo32, x, y, 32, 32, null); }
-            });
-            clientTitle.setIconTextGap(12);
-        }
-        desc = new JTextArea();
-        desc.setEditable(false);
-        desc.setFocusable(false);
-        desc.setOpaque(false);
-        desc.setLineWrap(true);
-        desc.setWrapStyleWord(true);
-        desc.setFont(Ui.font(Font.PLAIN, 16f));
-        desc.setForeground(Ui.MUTED);
-        desc.setBounds(CX, 112, CWD - 16, 200);
-        buildLabel = Ui.label("", Ui.font(Font.PLAIN, 13f), Ui.MUTED, SwingConstants.LEFT);
-        buildLabel.setBounds(CX + 44, 72, CWD - 44, 20);
-        homeScreen.add(buildLabel);
-        status = Ui.label("", Ui.font(Font.PLAIN, 13f), Ui.MUTED, SwingConstants.LEFT);
-        status.setBounds(CX, APP_H - 152, CWD, 20);
-        bar = new Ui.Bar();
-        bar.setBounds(CX, APP_H - 126, CWD, 14);
-        bar.setVisible(false);
-        launchBtn = new Ui.GradButton("ЗАПУСТИТЬ", true, this::launch);
-        launchBtn.setBounds(CX, APP_H - 100, CWD, 52);
-        for (Component c : new Component[]{clientTitle, desc, status, bar, launchBtn}) homeScreen.add(c);
+        JLabel t = Ui.label("Информация", Ui.font(Font.BOLD, 26f), Wv.TEXT, SwingConstants.LEFT);
+        t.setBounds(CX, 26, CWD, 38);
+        JLabel sub = Ui.label("Ваш аккаунт и состояние клиента", Wv.semi(14f), new Color(0xA3AAB3), SwingConstants.LEFT);
+        sub.setBounds(CX, 62, CWD, 20);
+        infoGrid = new Wv.InfoGrid("UUID", "Тип доступа", "Версия лаунчера", "Статус");
+        infoGrid.onClick(0, this::copyUuid);
+        infoGrid.setBounds(CX, 100, CWD, 136);
+        JLabel cl = Ui.label("КЛИЕНТ", Wv.caps(15f, 0.06f), Wv.TEXT, SwingConstants.LEFT);
+        cl.setBounds(CX, 258, CWD, 22);
+        clientGrid = new Wv.InfoGrid("Версия Minecraft", "Загрузчик", "Защита", "Выделено памяти");
+        clientGrid.setBounds(CX, 290, CWD, 136);
+        buildLabel = Ui.label("", Ui.font(Font.PLAIN, 13f), Wv.MUTED, SwingConstants.LEFT);
+        buildLabel.setBounds(CX + 4, 436, CWD, 20);
+        launchBtn = new Wv.LightButton("Установить", Wv.Glyph.DOWNLOAD, this::launch);
+        actionBar = new Wv.ActionBar(launchBtn);
+        actionBar.setBounds(CX, BODY_H - 28 - 112, CWD, 112);
+        for (Component c : new Component[]{t, sub, infoGrid, cl, clientGrid, buildLabel, actionBar}) homeScreen.add(c);
         refreshClient();
     }
 
@@ -432,9 +444,10 @@ public final class Main {
     private void refreshBuild() {
         Path jar = clients.get(clientIdx).resolveJar(appDir, root);
         if (jar == null) {
-            buildLabel.setForeground(Ui.ERR);
+            buildLabel.setForeground(Wv.RED);
             buildLabel.setText("Сборка клиента не найдена");
             shownBuild = 0;
+            refreshReady();
             return;
         }
         try {
@@ -442,10 +455,11 @@ public final class Main {
             long mb = Math.round(Files.size(jar) / 1048576.0);
             String when = new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(t));
             boolean fresh = launchedBuild() != 0 && t > launchedBuild();
-            buildLabel.setForeground(fresh ? Color.WHITE : Ui.MUTED);
-            buildLabel.setText((fresh ? "\u25CF Новая сборка от " : "Сборка от ") + when + "  \u00b7  " + mb + " МБ");
+            buildLabel.setForeground(fresh ? Wv.BLUE : Wv.MUTED);
+            buildLabel.setText((fresh ? "● Новая сборка от " : "Сборка от ") + when + "  ·  " + mb + " МБ");
             shownBuild = t;
         } catch (Exception ignored) { }
+        refreshReady();
     }
 
     /** Следит за папками сборок: новый билд сразу отображается в открытом лаунчере. */
@@ -464,98 +478,103 @@ public final class Main {
         w.start();
     }
 
+    /** Статус «Готов к запуску» и текст кнопки (Установить / Играть), пока игра не запускается. */
+    private void refreshReady() {
+        if (busy || actionBar == null) return;
+        boolean inst = clients.get(clientIdx).installed(root);
+        launchBtn.set(inst ? "Играть" : "Установить", inst ? Wv.Glyph.PLAY : Wv.Glyph.DOWNLOAD);
+        if (lastError != null) actionBar.status(lastError, Wv.ActionBar.ERR);
+        else if (shownBuild == 0) actionBar.status("Сборка клиента не найдена", Wv.ActionBar.ERR);
+        else actionBar.status("Готов к запуску", Wv.ActionBar.OK);
+    }
+
     private void refreshClient() {
         Client c = clients.get(clientIdx);
-        clientTitle.setText(c.name + " " + c.mc + " Premium");
+        Accounts.User u = accounts.session();
+        String uuid = u == null ? null : accounts.uuid(u.login);
+        infoGrid.set(0, uuid == null ? "—" : uuid, null);
+        infoGrid.set(1, plan(), null);
+        infoGrid.set(2, LAUNCHER_VERSION, null);
+        infoGrid.set(3, "Активен", Wv.GREEN);
+        clientGrid.set(0, c.mc, null);
+        clientGrid.set(1, "Fabric", null);
+        String prot = launcherConfig("protection");
+        clientGrid.set(2, prot == null || prot.isBlank() ? "BullProtection" : prot, null);
+        clientGrid.set(3, ram() * 1024 + " MB", null);
         if (buildLabel != null) refreshBuild();
-        desc.setText(c.description);
     }
 
-    // ----- клиенты -----
-    private void buildClients() {
-        JLabel t = Ui.label("Клиенты", Ui.font(Font.BOLD, 22f), Ui.TEXT, SwingConstants.LEFT);
-        t.setBounds(CX, 28, CWD, 40);
-        JLabel sub = Ui.label("Выберите клиент для запуска", Ui.font(Font.PLAIN, 14f), Ui.MUTED, SwingConstants.LEFT);
-        sub.setBounds(CX, 68, CWD, 22);
-        clientList = new JPanel(null);
-        clientList.setOpaque(false);
-        clientList.setBounds(CX, 110, CWD, APP_H - 140);
-        clientsScreen.add(t);
-        clientsScreen.add(sub);
-        clientsScreen.add(clientList);
-        refreshClients();
+    /** Копирует UUID аккаунта в буфер обмена и на секунду показывает «Скопировано». */
+    private void copyUuid() {
+        Accounts.User u = accounts.session();
+        String uuid = u == null ? null : accounts.uuid(u.login);
+        if (uuid == null) return;
+        try {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(uuid), null);
+        } catch (Exception ignored) { return; }
+        infoGrid.set(0, "Скопировано", Wv.GREEN);
+        javax.swing.Timer t = new javax.swing.Timer(1200, e -> infoGrid.set(0, uuid, null));
+        t.setRepeats(false);
+        t.start();
     }
 
-    private void refreshClients() {
-        clientList.removeAll();
-        for (int i = 0; i < clients.size(); i++) {
-            int idx = i;
-            Client c = clients.get(i);
-            Ui.Card card = new Ui.Card(c.name + " " + c.mc + " Premium", "Fabric " + c.loader, logo40, () -> {
-                if (busy) return;
-                clientIdx = idx;
-                refreshClient();
-                refreshClients();
-                show("home");
-            });
-            card.selected = i == clientIdx;
-            card.setBounds(0, i * 82, CWD, 70);
-            clientList.add(card);
-        }
-        clientList.repaint();
+    /** Тариф доступа (из launcher.json, по умолчанию LIFETIME). */
+    private String plan() {
+        String p = launcherConfig("plan");
+        return p == null || p.isBlank() ? "LIFETIME" : p.toUpperCase();
     }
 
     // ----- настройки -----
     private void buildSettings() {
-        JLabel t = Ui.label("Настройки", Ui.font(Font.BOLD, 22f), Ui.TEXT, SwingConstants.LEFT);
-        t.setBounds(CX, 28, CWD, 40);
+        JLabel t = Ui.label("Настройки", Ui.font(Font.BOLD, 26f), Ui.TEXT, SwingConstants.LEFT);
+        t.setBounds(CX, 26, CWD, 38);
         JLabel nl = Ui.label("Игровой ник", Ui.font(Font.PLAIN, 14f), Ui.MUTED, SwingConstants.LEFT);
-        nl.setBounds(CX, 96, CWD, 20);
+        nl.setBounds(CX, 82, CWD, 20);
         nickField = new Ui.Field("Ник в игре", false);
-        nickField.setBounds(CX, 122, CWD, 48);
+        nickField.setBounds(CX, 106, CWD, 46);
 
         JLabel rl = Ui.label("Оперативная память", Ui.font(Font.PLAIN, 14f), Ui.MUTED, SwingConstants.LEFT);
-        rl.setBounds(CX, 194, CWD, 20);
+        rl.setBounds(CX, 170, CWD, 20);
         Ui.IconBtn minus = new Ui.IconBtn(Ui.Icon.LEFT, () -> { settings.put("ram", Math.max(2, ram() - 1)); refreshRam(); });
         Ui.IconBtn plus = new Ui.IconBtn(Ui.Icon.RIGHT, () -> { settings.put("ram", Math.min(16, ram() + 1)); refreshRam(); });
-        minus.setBounds(CX, 220, 30, 30);
-        plus.setBounds(CX + CWD - 30, 220, 30, 30);
+        minus.setBounds(CX, 196, 30, 30);
+        plus.setBounds(CX + CWD - 30, 196, 30, 30);
         ramLabel = Ui.label("", Ui.font(Font.BOLD, 16f), Ui.TEXT, SwingConstants.CENTER);
-        ramLabel.setBounds(CX + 36, 220, CWD - 72, 30);
+        ramLabel.setBounds(CX + 36, 196, CWD - 72, 30);
 
         JLabel pl = Ui.label("Частицы на фоне", Ui.font(Font.PLAIN, 14f), Ui.MUTED, SwingConstants.LEFT);
-        pl.setBounds(CX, 272, CWD, 20);
+        pl.setBounds(CX, 244, CWD, 20);
         settingsScreen.add(pl);
         Particles.Kind[] kinds = Particles.Kind.values();
         partChips = new Ui.Chip[kinds.length];
         for (int i = 0; i < kinds.length; i++) {
             Particles.Kind k = kinds[i];
             partChips[i] = new Ui.Chip(k.title, () -> setParticles(k));
-            partChips[i].setBounds(CX + i * 132, 298, 120, 40);
+            partChips[i].setBounds(CX + i * 132, 268, 120, 40);
             settingsScreen.add(partChips[i]);
             partChips[i].snap(k == particles.kind());
         }
         JLabel dl = Ui.label("Статус в Discord", Ui.font(Font.PLAIN, 14f), Ui.MUTED, SwingConstants.LEFT);
-        dl.setBounds(CX, 356, CWD, 20);
+        dl.setBounds(CX, 324, CWD, 20);
         settingsScreen.add(dl);
         boolean rpcOn = !"off".equals(Json.str(settings, "discord"));
         rpcChips = new Ui.Chip[]{
                 new Ui.Chip("Вкл", () -> setRpc(true)),
                 new Ui.Chip("Выкл", () -> setRpc(false))};
         for (int i = 0; i < 2; i++) {
-            rpcChips[i].setBounds(CX + i * 132, 382, 120, 40);
+            rpcChips[i].setBounds(CX + i * 132, 348, 120, 40);
             rpcChips[i].snap(i == 0 ? rpcOn : !rpcOn);
             settingsScreen.add(rpcChips[i]);
         }
         JLabel fl = Ui.label("FPS в игре", Ui.font(Font.PLAIN, 14f), Ui.MUTED, SwingConstants.LEFT);
-        fl.setBounds(CX, 440, CWD, 20);
+        fl.setBounds(CX, 404, CWD, 20);
         settingsScreen.add(fl);
         boolean unl = unlimitedFps();
         fpsChips = new Ui.Chip[]{
                 new Ui.Chip("Без лимита", () -> setFps(true)),
                 new Ui.Chip("Как в игре", () -> setFps(false))};
         for (int i = 0; i < 2; i++) {
-            fpsChips[i].setBounds(CX + i * 152, 466, 140, 40);
+            fpsChips[i].setBounds(CX + i * 152, 428, 140, 40);
             fpsChips[i].snap(i == 0 ? unl : !unl);
             settingsScreen.add(fpsChips[i]);
         }
@@ -566,9 +585,10 @@ public final class Main {
             else { JOptionPane.showMessageDialog(frame, "Ник: 3–16 символов, латиница, цифры и _"); return; }
             saveSettings();
             refreshUser();
+            refreshClient();
             show("home");
         });
-        save.setBounds(CX, 540, CWD, 52);
+        save.setBounds(CX, 500, CWD, 52);
 
         Ui.Link folder = new Ui.Link("Открыть папку игры", () -> {
             try {
@@ -577,8 +597,10 @@ public final class Main {
                 Desktop.getDesktop().open(d.toFile());
             } catch (Exception ignored) { }
         });
-        folder.setBounds(CX, 612, CWD, 22);
-        for (Component c : new Component[]{t, nl, nickField, rl, minus, plus, ramLabel, save, folder}) settingsScreen.add(c);
+        folder.setBounds(CX, 572, 180, 22);
+        Ui.Link version = new Ui.Link("Сменить версию", () -> show("versions"));
+        version.setBounds(CX + 200, 572, 180, 22);
+        for (Component c : new Component[]{t, nl, nickField, rl, minus, plus, ramLabel, save, folder, version}) settingsScreen.add(c);
         refreshRam();
     }
 
@@ -622,11 +644,12 @@ public final class Main {
     /** Текст статуса Discord для текущего раздела. */
     private void presence() {
         String n = screenName;
-        if (n.equals("auth")) { discord.set("В лаунчере GuardListen", "Входит в аккаунт"); return; }
+        if (n.equals("auth")) { discord.set("В лаунчере WiosVisuals", "Входит в аккаунт"); return; }
         String st;
         switch (n) {
-            case "clients": st = "Выбирает клиент"; break;
+            case "versions": st = "Выбирает версию"; break;
             case "mods": st = "Подбирает модификаторы"; break;
+            case "packs": st = "Выбирает ресурспаки"; break;
             case "settings": st = "В настройках"; break;
             case "account": st = "В профиле"; break;
             default: st = "Готовится к игре";
@@ -647,42 +670,42 @@ public final class Main {
 
     // ----- аккаунт -----
     private void buildAccount() {
-        JLabel t = Ui.label("Аккаунт", Ui.font(Font.BOLD, 22f), Ui.TEXT, SwingConstants.LEFT);
-        t.setBounds(CX, 28, CWD, 40);
+        JLabel t = Ui.label("Аккаунт", Ui.font(Font.BOLD, 26f), Ui.TEXT, SwingConstants.LEFT);
+        t.setBounds(CX, 26, CWD, 38);
         accAvatar = new Ui.Avatar();
-        accAvatar.setBounds(CX, 100, 84, 84);
+        accAvatar.setBounds(CX, 86, 84, 84);
         accName = Ui.label("", Ui.font(Font.BOLD, 20f), Ui.TEXT, SwingConstants.LEFT);
-        accName.setBounds(CX + 104, 110, CWD - 104, 28);
+        accName.setBounds(CX + 104, 96, CWD - 104, 28);
         accRole = Ui.label("", Ui.font(Font.BOLD, 14f), Ui.ORANGE, SwingConstants.LEFT);
-        accRole.setBounds(CX + 104, 142, CWD - 104, 22);
+        accRole.setBounds(CX + 104, 128, CWD - 104, 22);
         accLogin = Ui.label("", Ui.font(Font.PLAIN, 13f), Ui.MUTED, SwingConstants.LEFT);
-        accLogin.setBounds(CX + 104, 164, CWD - 104, 20);
+        accLogin.setBounds(CX + 104, 150, CWD - 104, 20);
         JLabel al = Ui.label("Аватар", Ui.font(Font.BOLD, 15f), Ui.TEXT, SwingConstants.LEFT);
-        al.setBounds(CX, 224, CWD, 22);
+        al.setBounds(CX, 200, CWD, 22);
         accountScreen.add(al);
         choices = new Ui.AvatarChoice[Avatars.IDS.length];
         for (int i = 0; i < choices.length; i++) {
             String id = Avatars.IDS[i];
             choices[i] = new Ui.AvatarChoice(id, () -> chooseAvatar(id));
-            choices[i].setBounds(CX + i * 82 - 6, 252, 76, 76);
+            choices[i].setBounds(CX + i * 82 - 6, 228, 76, 76);
             accountScreen.add(choices[i]);
         }
         Ui.GradButton upload = new Ui.GradButton("Загрузить своё фото", false, this::uploadAvatar).ghost();
-        upload.setBounds(CX, 346, 220, 40);
+        upload.setBounds(CX, 318, 220, 40);
         Ui.GradButton reset = new Ui.GradButton("Сбросить", false, () -> chooseAvatar(null)).ghost();
-        reset.setBounds(CX + 232, 346, 120, 40);
+        reset.setBounds(CX + 232, 318, 120, 40);
         Ui.GradButton out = new Ui.GradButton("Выйти из аккаунта", false, () -> { accounts.logout(); show("auth"); });
-        out.setBounds(CX, 596, CWD, 52);
+        out.setBounds(CX, BODY_H - 28 - 52, CWD, 52);
         JLabel ml = Ui.label("Лицензия Minecraft", Ui.font(Font.BOLD, 15f), Ui.TEXT, SwingConstants.LEFT);
-        ml.setBounds(CX, 412, CWD, 22);
+        ml.setBounds(CX, 382, CWD, 22);
         msStatus = Ui.label("", Ui.font(Font.PLAIN, 14f), Ui.MUTED, SwingConstants.LEFT);
-        msStatus.setBounds(CX, 438, CWD, 20);
+        msStatus.setBounds(CX, 408, CWD, 20);
         msCode = Ui.label("", Ui.font(Font.BOLD, 28f), Color.WHITE, SwingConstants.LEFT);
-        msCode.setBounds(CX, 462, CWD, 38);
+        msCode.setBounds(CX, 432, CWD, 38);
         msBtn = new Ui.GradButton("Войти через Microsoft", false, this::msClick).ghost();
-        msBtn.setBounds(CX, 508, 280, 44);
+        msBtn.setBounds(CX, 478, 280, 44);
         msOpen = new Ui.Link("Открыть страницу входа", () -> openUrl(msDc != null ? msDc.url : "https://www.microsoft.com/link"));
-        msOpen.setBounds(CX + 300, 519, 260, 22);
+        msOpen.setBounds(CX + 300, 489, 260, 22);
         for (Component c : new Component[]{ml, msStatus, msCode, msBtn, msOpen}) accountScreen.add(c);
         refreshMs();
         for (Component c : new Component[]{t, accAvatar, accName, accRole, accLogin, upload, reset, out}) accountScreen.add(c);
@@ -820,14 +843,17 @@ public final class Main {
         if (u == null) return;
         String n = nick();
         String letter = n.substring(0, 1).toUpperCase();
-        sideName.setText(n);
-        sideRole.setText(u.role);
-        sideAvatar.letter = letter;
+        profile.name = n;
+        profile.sub = "WiosVisuals";
+        profile.avatar.letter = letter;
+        subCard.plan = plan();
+        profile.repaint();
+        subCard.repaint();
         accName.setText(n);
         accRole.setText(u.role);
         accLogin.setText("Логин: " + u.login);
         accAvatar.letter = letter;
-        applyAvatar(sideAvatar);
+        applyAvatar(profile.avatar);
         applyAvatar(accAvatar);
         if (choices != null) for (Ui.AvatarChoice c : choices) c.selected = c.id.equals(Json.str(settings, "avatar"));
         appScreen.repaint();
@@ -835,18 +861,28 @@ public final class Main {
 
     private Ui.Screen contentOf(String name) {
         switch (name) {
-            case "clients": return clientsScreen;
             case "mods": return modsScreen;
+            case "packs": return packsScreen;
             case "settings": return settingsScreen;
             case "account": return accountScreen;
             default: return homeScreen;
         }
     }
 
+    private Ui.Screen[] contents() { return new Ui.Screen[]{homeScreen, modsScreen, packsScreen, settingsScreen, accountScreen}; }
+
     private Ui.Screen visibleContent() {
-        for (Ui.Screen s : new Ui.Screen[]{homeScreen, clientsScreen, modsScreen, settingsScreen, accountScreen})
-            if (s.isVisible()) return s;
+        for (Ui.Screen s : contents()) if (s.isVisible()) return s;
         return null;
+    }
+
+    /** Режим окна: авторизация, выбор версии или основное окно с меню. */
+    private static String modeOf(String name) {
+        return name.equals("auth") || name.equals("versions") ? name : "app";
+    }
+
+    private Ui.Screen modeScreen(String mode) {
+        return mode.equals("auth") ? authScreen : mode.equals("versions") ? versionScreen : appScreen;
     }
 
     /** Мгновенно завершает текущий переход между разделами (если он идёт). */
@@ -859,11 +895,11 @@ public final class Main {
 
     private void show(String name) {
         if (frame == null || !frame.isVisible()) { doShow(name); return; }
-        boolean app = !name.equals("auth");
-        boolean sameMode = app && appScreen.isVisible();
+        String mode = modeOf(name);
+        boolean sameMode = mode.equals("app") && appScreen.isVisible();
         finishTransition();
         Ui.Screen from = sameMode ? visibleContent() : null;
-        Ui.Screen to = sameMode ? contentOf(name) : (app ? appScreen : authScreen);
+        Ui.Screen to = sameMode ? contentOf(name) : modeScreen(mode);
         if (from == to) return;
         doShow(name);
         if (from != null) from.setVisible(true); // старый раздел плавно гаснет, новый проявляется
@@ -897,19 +933,16 @@ public final class Main {
     }
 
     private void doShow(String name) {
-        boolean app = !name.equals("auth");
-        applySize(app);
-        authScreen.setVisible(!app);
-        appScreen.setVisible(app);
-        homeScreen.setVisible(name.equals("home"));
-        clientsScreen.setVisible(name.equals("clients"));
-        modsScreen.setVisible(name.equals("mods"));
-        settingsScreen.setVisible(name.equals("settings"));
-        accountScreen.setVisible(name.equals("account"));
+        String mode = modeOf(name);
+        applySize(!mode.equals("auth"));
+        authScreen.setVisible(mode.equals("auth"));
+        versionScreen.setVisible(mode.equals("versions"));
+        appScreen.setVisible(mode.equals("app"));
+        if (mode.equals("app")) for (Ui.Screen sc : contents()) sc.setVisible(sc == contentOf(name));
         for (int i = 0; i < NAV.length; i++) nav[i].setSelected(NAV[i][0].equals(name));
-        if (app) refreshUser();
-        if (name.equals("clients")) refreshClients();
+        if (mode.equals("app")) { refreshUser(); refreshClient(); }
         if (name.equals("mods")) modsScreen.onShow();
+        if (name.equals("packs")) packsScreen.onShow();
         if (name.equals("settings")) nickField.input.setText(Json.str(settings, "nick") == null ? "" : Json.str(settings, "nick"));
         screenName = name;
         if (!busy) presence();
@@ -920,14 +953,14 @@ public final class Main {
 
     private void start() {
         build();
-        frame = new JFrame("GuardListen");
+        frame = new JFrame("WiosVisuals");
         try { frame.setIconImage(javax.imageio.ImageIO.read(Main.class.getResource("/icon.png"))); } catch (Exception ignored) { }
         frame.setUndecorated(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setContentPane(rootPanel);
         frame.setSize(AUTH_W, AUTH_H);
         frame.setLocationRelativeTo(null);
-        if (System.getProperty("gl.noshape") == null) frame.setShape(new RoundRectangle2D.Float(0, 0, AUTH_W, AUTH_H, 22, 22));
+        if (System.getProperty("gl.noshape") == null) frame.setShape(new RoundRectangle2D.Float(0, 0, AUTH_W, AUTH_H, 18, 18));
         MouseAdapter drag = new MouseAdapter() {
             Point o;
             public void mousePressed(MouseEvent e) { o = e.getPoint(); }
@@ -938,7 +971,7 @@ public final class Main {
         };
         rootPanel.addMouseListener(drag);
         rootPanel.addMouseMotionListener(drag);
-        doShow(accounts.session() != null ? "home" : "auth");
+        doShow(accounts.session() != null ? "versions" : "auth");
         warmUp();
         discord.setEnabled(!"off".equals(Json.str(settings, "discord")));
         presence();
@@ -964,16 +997,19 @@ public final class Main {
         BufferedImage img = new BufferedImage(APP_W, APP_H, BufferedImage.TYPE_INT_ARGB);
         Ui.Screen shown = visibleContent();
         boolean appWas = appScreen.isVisible();
-        for (Ui.Screen sc : new Ui.Screen[]{homeScreen, clientsScreen, settingsScreen, accountScreen, modsScreen}) {
-            for (Ui.Screen o : new Ui.Screen[]{homeScreen, clientsScreen, modsScreen, settingsScreen, accountScreen}) o.setVisible(o == sc);
+        for (Ui.Screen sc : contents()) {
+            for (Ui.Screen o : contents()) o.setVisible(o == sc);
             for (int i = 0; i < 3; i++) {
                 Graphics2D g = img.createGraphics();
                 appScreen.paint(g);
                 g.dispose();
             }
         }
-        for (Ui.Screen o : new Ui.Screen[]{homeScreen, clientsScreen, modsScreen, settingsScreen, accountScreen}) o.setVisible(o == shown);
+        for (Ui.Screen o : contents()) o.setVisible(o == shown);
         appScreen.setVisible(appWas);
+        Graphics2D vg = img.createGraphics();
+        versionScreen.paint(vg);
+        vg.dispose();
     }
 
     private final Anim.Ticker particleTicker = dt -> {
@@ -992,19 +1028,20 @@ public final class Main {
     // ---------- запуск ----------
     private void progress(String text, double f) {
         SwingUtilities.invokeLater(() -> {
-            status.setForeground(Ui.MUTED);
-            status.setText(text);
-            bar.setValue(f);
-            discord.set("В лаунчере \u2022 Ник: " + nick(), "Загружает игру: " + (int) Math.round(f * 100) + "%");
+            actionBar.status(text, Wv.ActionBar.BUSY);
+            actionBar.bar.setValue(f);
+            discord.set("В лаунчере • Ник: " + nick(), "Загружает игру: " + (int) Math.round(f * 100) + "%");
         });
     }
 
     private void launch() {
         if (busy) return;
         busy = true;
+        lastError = null;
         launchBtn.setEnabled(false);
-        launchBtn.setText("ПОДГОТОВКА...");
-        bar.setVisible(true);
+        launchBtn.set("Загрузка...", Wv.Glyph.DOWNLOAD);
+        actionBar.status("Подготовка...", Wv.ActionBar.BUSY);
+        actionBar.progress(true);
         Client c = clients.get(clientIdx);
         String nick = nick();
         int ram = ram();
@@ -1013,7 +1050,7 @@ public final class Main {
                 Path jar = c.resolveJar(appDir, root);
                 if (jar != null) {
                     long bt = Files.getLastModifiedTime(jar).toMillis();
-                    SwingUtilities.invokeLater(() -> { settings.put("lastBuild", bt); saveSettings(); refreshBuild(); });
+                    SwingUtilities.invokeLater(() -> { settings.put("lastBuild", bt); saveSettings(); });
                 }
                 if (jar == null) throw new IllegalStateException("Не найден jar клиента. Положите его в clients/" + c.id + ".jar рядом с лаунчером");
                 MicrosoftAuth.Session ses = msa.configured() ? msa.session() : null; // без лицензии дальше не пускает
@@ -1024,31 +1061,29 @@ public final class Main {
                 Process p = new ProcessBuilder(plan.command).directory(plan.gameDir.toFile())
                         .redirectErrorStream(true).redirectOutput(log.toFile()).start();
                 discord.setPaused(true);
-                SwingUtilities.invokeLater(() -> { launchBtn.setText("ИГРА ЗАПУЩЕНА"); frame.setVisible(false); });
+                SwingUtilities.invokeLater(() -> {
+                    launchBtn.set("Игра запущена", Wv.Glyph.PLAY);
+                    actionBar.status("Игра запущена", Wv.ActionBar.OK);
+                    actionBar.progress(false);
+                    frame.setVisible(false);
+                });
                 int code = p.waitFor();
                 SwingUtilities.invokeLater(() -> {
                     frame.setVisible(true);
                     startParticles();
                     discord.setPaused(false);
-                    if (code != 0) {
-                        status.setForeground(Ui.ERR);
-                        status.setText("Игра завершилась с кодом " + code + ". Лог: " + log);
-                    } else status.setText("");
+                    if (code != 0) lastError = "Игра завершилась с кодом " + code + ". Лог: " + log;
                 });
             } catch (Throwable t) {
-                SwingUtilities.invokeLater(() -> {
-                    status.setForeground(Ui.ERR);
-                    String m = String.valueOf(t.getMessage());
-                    status.setText(m.length() > 70 ? m.substring(0, 70) + "..." : m);
-                });
+                SwingUtilities.invokeLater(() -> lastError = String.valueOf(t.getMessage()));
             } finally {
                 SwingUtilities.invokeLater(() -> {
                     busy = false;
                     discord.setPaused(false);
                     presence();
                     launchBtn.setEnabled(true);
-                    launchBtn.setText("ЗАПУСТИТЬ");
-                    bar.setVisible(false);
+                    actionBar.progress(false);
+                    refreshBuild();
                 });
             }
         }, "launch").start();
@@ -1059,16 +1094,19 @@ public final class Main {
         try {
             Files.createDirectories(dir);
             build();
-            for (String s : new String[]{"auth", "home", "clients", "settings", "account"}) {
+            for (String s : new String[]{"auth", "versions", "home", "packs", "settings", "account"}) {
                 show(s);
-                if (!s.equals("auth")) {
-                    sideName.setText("user"); sideRole.setText("Administrator"); sideAvatar.letter = "U";
-                    accName.setText("user"); accRole.setText("Administrator"); accLogin.setText("Логин: user"); accAvatar.letter = "U";
+                if (!s.equals("auth") && !s.equals("versions")) {
+                    profile.name = "Wios"; profile.sub = "WiosVisuals";
+                    accName.setText("Wios"); accRole.setText("Administrator"); accLogin.setText("Логин: wios"); accAvatar.letter = "W";
                 }
                 BufferedImage img = new BufferedImage(W, H, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g = img.createGraphics();
                 g.setColor(new Color(0x303030));
                 g.fillRect(0, 0, W, H);
+                rootPanel.validate();
+                if (s.equals("packs")) packsScreen.reload();
+                rootPanel.validate();
                 rootPanel.printAll(g);
                 g.dispose();
                 javax.imageio.ImageIO.write(img, "png", dir.resolve(s + ".png").toFile());

@@ -35,6 +35,7 @@ public class MainMenuScreen extends Screen implements IMinecraft {
     private MenuButton settingsButton;
     private MenuButton accountsButton;
     private MenuButton modsButton;
+    private MenuButton modificationsButton;
     private MenuButton exitButton;
 
     boolean exit = false;
@@ -71,6 +72,27 @@ public class MainMenuScreen extends Screen implements IMinecraft {
         return MENU_BGS[menuBgSaved];
     }
 
+    /** Чёрно-белые копии обоев (1280 px, уже затемнены) для экрана загрузки. */
+    private static final Identifier[] LOADER_BGS = new Identifier[]{
+            Identifier.of("client", "textures/frame/menu_bw.png"),
+            Identifier.of("client", "textures/frame/menu2_bw.png"),
+            Identifier.of("client", "textures/frame/menu3_bw.png"),
+            Identifier.of("client", "textures/frame/menu4_bw.png"),
+    };
+    private static final float[] LOADER_BG_H = {718F, 720F, 720F, 720F};
+
+    public static net.minecraft.util.Identifier loaderTexture() {
+        return LOADER_BGS[menuBgSaved];
+    }
+
+    public static float loaderWidth() {
+        return 1280F;
+    }
+
+    public static float loaderHeight() {
+        return LOADER_BG_H[menuBgSaved];
+    }
+
     public static float backgroundWidth() {
         return MENU_BG_W[menuBgSaved];
     }
@@ -101,6 +123,14 @@ public class MainMenuScreen extends Screen implements IMinecraft {
         buildButtons();
     }
 
+    private void openModList() {
+        if (FabricLoader.getInstance().isModLoaded("modmenu")) {
+            mc.setScreen(new com.terraformersmc.modmenu.gui.ModsScreen(this));
+        } else {
+            code.wiosvisual.display.screens.clickgui.WiosGuiScreen.getInstance().openGui(this);
+        }
+    }
+
     private void buildButtons() {
         buttons.clear();
 
@@ -114,21 +144,13 @@ public class MainMenuScreen extends Screen implements IMinecraft {
         buttons.add(multiplayerButton);
         buttons.add(singleplayerButton);
 
-        if (FabricLoader.getInstance().isModLoaded("modmenu")) {
-            modsButton = new MenuButton("Моды", "Mods",
-                    "Управление установленными модификациями", "Manage your installed modifications", () -> {
-                try {
-                    Class<?> modMenuClass = Class.forName("com.terraformersmc.modmenu.gui.ModsScreen");
-                    Screen modsScreen = (Screen) modMenuClass.getConstructor(Screen.class).newInstance(this);
-                    mc.setScreen(modsScreen);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-            buttons.add(modsButton);
-        } else {
-            modsButton = null;
-        }
+        // Список установленных модов и их настроек — ModMenu (вшит в jar клиента).
+        // Модули Wios открываются оттуда же кнопкой настроек у Wios, а в игре — биндом ClickGUI.
+        modificationsButton = new MenuButton("Модификации", "Modifications",
+                "Установленные моды и их настройки", "Installed mods and their settings",
+                this::openModList);
+        buttons.add(modificationsButton);
+        modsButton = null;
 
         accountsButton = new MenuButton("Аккаунты", "Accounts",
                 "Переключение и управление аккаунтами", "Switch and manage your accounts",
@@ -318,10 +340,12 @@ public class MainMenuScreen extends Screen implements IMinecraft {
         float smallWidth = (totalCardsWidth - smallGap * (smallCount - 1)) / smallCount;
         float smallHeight = 25;
 
+        float modHeight = 25;
+
         float exitWidth = Math.min(150F, totalCardsWidth * 0.65F);
         float exitHeight = 25;
 
-        float totalBlockHeight = cardHeight + gap + smallHeight + gap + exitHeight;
+        float totalBlockHeight = cardHeight + gap + modHeight + gap + smallHeight + gap + exitHeight;
 
         float startX = screenWidth / 2F - totalCardsWidth / 2F;
         float startY = screenHeight / 2F - totalBlockHeight / 2F;
@@ -333,6 +357,10 @@ public class MainMenuScreen extends Screen implements IMinecraft {
         singleplayerButton.drawHero(startX + cardWidth + gap, currentY, cardWidth, cardHeight, alphaVal, 1);
 
         currentY += cardHeight + gap;
+
+        modificationsButton.drawCompact(startX, currentY, totalCardsWidth, modHeight, alphaVal, "p");
+
+        currentY += modHeight + gap;
 
         float smallX = startX;
         settingsButton.drawCompact(smallX, currentY, smallWidth, smallHeight, alphaVal, "l");
@@ -413,7 +441,7 @@ public class MainMenuScreen extends Screen implements IMinecraft {
             }
             if (ru.mentions.utils.math.MathUtil.isHovered(mouseX, mouseY,
                     tgBtnX - tgBtnR, tgBtnY - tgBtnR, tgBtnR * 2F, tgBtnR * 2F)) {
-                Util.getOperatingSystem().open("https://web.telegram.org/k/#@mentosdlc");
+                Util.getOperatingSystem().open("https://t.me/wioscloud");
                 return true;
             }
             for (MenuButton btn : buttons) {

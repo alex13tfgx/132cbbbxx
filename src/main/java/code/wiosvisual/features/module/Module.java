@@ -39,6 +39,7 @@ implements QuickImports {
     private int secondKey = -1;
     public boolean state;
     private boolean hidden;
+    private boolean quiet;
 
     public Module(String name, ModuleCategory category) {
         this.name = name;
@@ -82,11 +83,21 @@ implements QuickImports {
         }
     }
 
+    /** Переключение без уведомления и звука — для автоматических переключений (ограничения сервера). */
+    public void setStateQuietly(boolean state) {
+        this.quiet = true;
+        try {
+            this.setState(state);
+        } finally {
+            this.quiet = false;
+        }
+    }
+
     private void handleStateChange() {
         try {
             MinecraftClient mc = MinecraftClient.getInstance();
             Hud hud = Hud.getInstance();
-            if (hud == null || ServerRestrictions.isForbiddenHere(this)) {
+            if (hud == null || this.quiet || ServerRestrictions.isForbiddenHere(this)) {
                 if (this.state) {
                     this.activate();
                 } else {

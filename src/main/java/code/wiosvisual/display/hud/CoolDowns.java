@@ -172,19 +172,7 @@ extends AbstractDraggable {
      * Используется отрисовкой кд прямо в слотах инвентаря.
      */
     public static int getRemainingSeconds(ItemStack stack) {
-        CoolDowns instance = CoolDowns.getInstance();
-        if (instance == null || stack == null || stack.isEmpty() || CoolDowns.mc.player == null) {
-            return 0;
-        }
-        if (!CoolDowns.mc.player.getItemCooldownManager().isCoolingDown(stack)) {
-            return 0;
-        }
-        Item item = stack.getItem();
-        for (CoolDown coolDown : instance.list) {
-            if (!coolDown.item.equals(item)) continue;
-            return Math.max((int)(-coolDown.time.elapsedTime() / 1000L), 0);
-        }
-        return 0;
+        return code.wiosvisual.utils.client.ItemCooldowns.remainingSeconds(stack);
     }
 
     public record CoolDown(Item item, StopWatch time, Animation anim) {

@@ -58,6 +58,12 @@ public abstract class Animation {
         }
     }
 
+    /** Сразу в конечное состояние направления, без анимации. */
+    public void finish(Direction direction) {
+        this.direction = direction;
+        timerUtil.setTime(System.currentTimeMillis() - duration);
+    }
+
     public void setDuration(int duration) {
         this.duration = duration;
     }

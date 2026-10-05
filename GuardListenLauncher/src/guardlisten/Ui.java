@@ -9,9 +9,9 @@ import java.awt.geom.*;
 /** Кастомные компоненты в тёмном стиле лаунчера. */
 final class Ui {
     static final Color BG = new Color(0x050505);
-    static final Color BORDER = new Color(0x2B2B2B);
-    static final Color FIELD = new Color(0x0F0F0F);
-    static final Color FIELD_BORDER = new Color(0x2A2A2A);
+    static final Color BORDER = new Color(255, 255, 255, 90);
+    static final Color FIELD = new Color(0x000000);
+    static final Color FIELD_BORDER = new Color(0x6A6A6A);
     static final Color TEXT = new Color(0xF5F5F5);
     static final Color MUTED = new Color(0x8C8C8C);
     static final Color A1 = new Color(0xB4B4B4);
@@ -151,26 +151,26 @@ final class Ui {
             }
             // свечение
             for (int i = 7; i > 0; i--) {
-                g.setColor(new Color(255, 255, 255, isEnabled() ? 4 : 1));
+                g.setColor(new Color(255, 255, 255, isEnabled() ? 3 : 1));
                 g.fill(new RoundRectangle2D.Float(2 - i / 2f, 4 - i / 2f + i / 2f, w - 4 + i, h + i, 12 + i, 12 + i));
             }
             Color c1 = A1, c2 = A2;
             if (!isEnabled()) { c1 = new Color(0x2A2A2A); c2 = new Color(0x333333); }
-            else { c1 = lerp(c1, new Color(0xD6D6D6), hv.v * 0.6f); c2 = lerp(c2, Color.WHITE, hv.v); }
+            else { c1 = lerp(new Color(0xF4F4F4), Color.WHITE, hv.v); c2 = lerp(new Color(0xE6E6E6), new Color(0xF4F4F4), hv.v); }
             if (press) y = 1;
             if (isEnabled() && hv.v > 0) {
                 g.setColor(new Color(255, 255, 255, (int) (14 * hv.v)));
                 g.fill(new RoundRectangle2D.Float(-3 * hv.v, 3 - 3 * hv.v, w + 6 * hv.v, h + 6 * hv.v, 16, 16));
             }
-            g.setPaint(new GradientPaint(0, 0, c1, w, 0, c2));
-            g.fill(new RoundRectangle2D.Float(0, y, w, h, 12, 12));
+            g.setPaint(new GradientPaint(0, y, c1, 0, y + h, c2));
+            g.fill(new RoundRectangle2D.Float(0, y, w, h, 16, 16));
             g.setFont(font(Font.BOLD, 15f));
             FontMetrics fm = g.getFontMetrics();
             String t = text.toUpperCase().equals(text) ? text : text;
             int tw = fm.stringWidth(t);
             int iw = play ? 22 : 0;
             int x = (w - tw - iw) / 2;
-            g.setColor(isEnabled() ? new Color(0x0A0A0A) : new Color(0x808080));
+            g.setColor(isEnabled() ? Color.BLACK : new Color(0x808080));
             if (play) {
                 int cy = y + h / 2;
                 Path2D tri = new Path2D.Float();
@@ -184,7 +184,7 @@ final class Ui {
     }
 
     /** Маленькая иконка-кнопка. */
-    enum Icon { CLOSE, LINK, EYE, LEFT, RIGHT, BACK }
+    enum Icon { CLOSE, MIN, LINK, EYE, LEFT, RIGHT, BACK }
 
     static final class IconBtn extends JComponent {
         private final Icon icon;
@@ -212,6 +212,9 @@ final class Ui {
                 case CLOSE:
                     g.draw(new Line2D.Float(cx - 6, cy - 6, cx + 6, cy + 6));
                     g.draw(new Line2D.Float(cx - 6, cy + 6, cx + 6, cy - 6));
+                    break;
+                case MIN:
+                    g.draw(new Line2D.Float(cx - 6, cy, cx + 6, cy));
                     break;
                 case LINK:
                     g.draw(new RoundRectangle2D.Float(cx - 7, cy - 5, 11, 11, 3, 3));
@@ -335,6 +338,8 @@ final class Ui {
 
     /** Круглый аватар с буквой. */
     static class Avatar extends JComponent {
+        /** Картинка по умолчанию (логотип), если аватар не выбран. */
+        static Image fallback;
         String letter = "?";
         String art;                       // id нарисованной аватарки
         java.awt.image.BufferedImage custom; // своё фото (квадрат)
@@ -350,6 +355,9 @@ final class Ui {
                 g.drawImage(cache, 0, 0, s, s, null);
             } else if (art != null) {
                 Avatars.draw(g, art, s);
+            } else if (fallback != null) {
+                if (cache == null || cacheSize != s) { cache = roundIcon(fallback, s, s / 2); cacheSize = s; }
+                g.drawImage(cache, 0, 0, s, s, null);
             } else {
                 g.setPaint(new RadialGradientPaint(s * 0.4f, s * 0.35f, s * 0.75f, new float[]{0f, 1f},
                         new Color[]{new Color(0x5A5A5A), new Color(0x151515)}));

@@ -27,8 +27,8 @@ import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 /**
- * Пост-эффекты руки от первого лица (Hand Shader, Ember Hands). Кадр копируется дважды:
- * до и после отрисовки руки. Разница двух кадров и есть маска руки, поэтому глубина не нужна.
+ * Пост-эффекты руки от первого лица (Hand Shader). Кадр копируется дважды: до и после отрисовки руки.
+ * Маска руки — глубина (перед рукой она очищается в 1.0) плюс разница кадров для сглаженных краёв.
  */
 public final class HandFx {
     private static final int FLOATS = 24;
@@ -61,6 +61,7 @@ public final class HandFx {
                         .withUniform("HandFxData", UniformType.UNIFORM_BUFFER)
                         .withSampler("Sampler0")
                         .withSampler("Sampler1")
+                        .withSampler("Sampler2")
                         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
                         .withDepthWrite(false)
                         .withCull(false)
@@ -136,16 +137,18 @@ public final class HandFx {
                 .write(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, MODEL_OFFSET, TEXTURE_MATRIX);
         GpuSampler sampler = RenderSystem.getSamplerCache().get(FilterMode.LINEAR);
 
+        // Глубина не подключается к проходу как цель: её читаем как текстуру (Sampler2).
+        // Перед рукой игра очищает глубину в 1.0, поэтому глубина < 1 — это ровно пиксели руки.
+        GpuSampler depthSampler = RenderSystem.getSamplerCache().get(FilterMode.NEAREST);
         try (RenderPass pass = encoder.createRenderPass(
                 () -> "wiosvisual:handfx_pass",
                 client.getFramebuffer().getColorAttachmentView(),
-                OptionalInt.empty(),
-                client.getFramebuffer().getDepthAttachmentView(),
-                OptionalDouble.empty())) {
+                OptionalInt.empty())) {
             pass.setPipeline(pipeline);
             pass.setVertexBuffer(0, dummyVertexBuffer);
             pass.bindTexture("Sampler0", beforeView, sampler);
             pass.bindTexture("Sampler1", afterView, sampler);
+            pass.bindTexture("Sampler2", client.getFramebuffer().getDepthAttachmentView(), depthSampler);
             RenderSystem.bindDefaultUniforms(pass);
             pass.setUniform("DynamicTransforms", dynamicTransforms);
             pass.setUniform("HandFxData", uniformBuffer);

@@ -4,6 +4,7 @@ import code.wiosvisual.Wiosvisual;
 import code.wiosvisual.events.player.TickEvent;
 import code.wiosvisual.features.module.Module;
 import code.wiosvisual.utils.client.managers.event.EventHandler;
+import code.wiosvisual.utils.client.net.ServerIdentity;
 import code.wiosvisual.utils.display.interfaces.QuickImports;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -42,6 +43,10 @@ import org.apache.logging.log4j.Logger;
  * Модуль Feature Control (liteapi:feature-control): после входа отправляем список
  * функций клиента (модулей), сервер отвечает теми, что заблокированы. Заблокированное
  * обязано быть полностью скрыто от игрока — это делает {@link ServerRestrictions}.
+ *
+ * Fail-closed: пока сервер с LiteAPI (или HolyWorld по адресу) не прислал блок-лист,
+ * заблокированы все функции. Неудачная проверка (таймаут, INTERNAL_ERROR, RATE_LIMITED, любая
+ * другая ошибка) повторяется не чаще раза в {@link #CHECK_COOLDOWN_MS}, с нарастающей паузой.
  */
 public final class HolyWorldLiteApi
 implements QuickImports {
@@ -49,9 +54,11 @@ implements QuickImports {
     public static final String CLIENT_ID = "wiosvisual";
     private static final Logger LOGGER = LogManager.getLogger("Wiosvisual");
     private static final long TIMEOUT_SECONDS = 5L;
-    /** Rate limit checkFeatures: 1 запрос в 10 секунд на игрока. */
+    /** Rate limit checkFeatures: 1 запрос в 10 секунд на игрока. Это же — минимальная пауза перед повтором. */
     private static final long CHECK_COOLDOWN_MS = 10_500L;
-    /** Сколько ждать регистрации канала сервером после входа/смены мира. */
+    /** Потолок паузы между повторами неудачной проверки. */
+    private static final long RETRY_MAX_MS = 60_000L;
+    /** Сколько ждать регистрации канала сервером после входа, прежде чем решить, что LiteAPI там нет. */
     private static final long CHANNEL_WAIT_MS = 15_000L;
     /** Модули ядра, которые не являются «функциями» и не отправляются на проверку. */
     private static final Set<String> CORE = Set.of("clickgui", "hud", "themeeditor");
@@ -62,9 +69,27 @@ implements QuickImports {
     private final Map<String, CompletableFuture<JsonObject>> pending = new ConcurrentHashMap<>();
     private final Map<String, Consumer<JsonObject>> eventHandlers = new ConcurrentHashMap<>();
     private volatile Set<String> blocklist = Collections.emptySet();
+    private volatile State state = State.OFFLINE;
     private ClientWorld lastWorld;
+    private long joinedAt;
     private long checkDueAt = -1L;
     private long lastCheckAt;
+    private boolean checkInFlight;
+    private int failures;
+    /** Растёт при каждом входе/выходе: ответы от прошлого подключения игнорируются. */
+    private int session;
+
+    /** Состояние Feature Control на текущем подключении. */
+    private enum State {
+        /** Не на сервере — блокировать нечего. */
+        OFFLINE,
+        /** На сервере, блок-листа ещё нет: fail-closed, всё заблокировано. */
+        AWAITING,
+        /** Блок-лист получен и действует. */
+        RECEIVED,
+        /** Одиночная игра или сервер без LiteAPI. */
+        NO_API
+    }
 
     private HolyWorldLiteApi() {
     }
@@ -112,7 +137,7 @@ implements QuickImports {
         PayloadTypeRegistry.playC2S().register(FEATURE_CONTROL, codec);
         PayloadTypeRegistry.playS2C().register(FEATURE_CONTROL, codec);
         ClientPlayNetworking.registerGlobalReceiver(FEATURE_CONTROL, (payload, context) -> INSTANCE.onMessage(payload.json()));
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> INSTANCE.scheduleCheck(0L));
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> INSTANCE.onJoin());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> INSTANCE.reset());
     }
 
@@ -169,7 +194,8 @@ implements QuickImports {
             if (handler != null) {
                 handler.accept(payload);
             } else if (payload.has("blocklist")) {
-                this.applyBlocklist(payload); // неизвестное событие, но с блок-листом — применяем
+                // неизвестное событие, но с блок-листом — применяем
+                mc.execute(() -> this.applyBlocklist(payload));
             }
             return;
         }
@@ -204,10 +230,13 @@ implements QuickImports {
 
     // ------------------------------------------------------------------ Feature Control
 
-    /** Функция заблокирована сервером HolyWorld прямо сейчас. */
+    /** Функция заблокирована сервером HolyWorld прямо сейчас (до первого ответа — заблокировано всё). */
     public static boolean isBlocked(Module module) {
-        Set<String> list = INSTANCE.blocklist;
-        return !list.isEmpty() && list.contains(featureId(module));
+        return switch (INSTANCE.state) {
+            case AWAITING -> !CORE.contains(featureId(module));
+            case RECEIVED -> INSTANCE.blocklist.contains(featureId(module));
+            default -> false;
+        };
     }
 
     /** Идентификатор функции для сервера: имя модуля в нижнем регистре (fullbright, zoom, freelook…). */
@@ -219,12 +248,31 @@ implements QuickImports {
         this.checkDueAt = System.currentTimeMillis() + delayMs;
     }
 
+    private void onJoin() {
+        this.reset();
+        this.joinedAt = System.currentTimeMillis();
+        // В одиночной игре LiteAPI нет; на сервере до ответа всё закрыто.
+        // lastCheckAt не сбрасываем: лимит сервера считается на игрока, а не на подключение.
+        this.state = mc.isInSingleplayer() ? State.NO_API : State.AWAITING;
+        this.scheduleCheck(0L);
+    }
+
     private void reset() {
+        this.session++;
         this.pending.values().forEach(f -> f.cancel(false));
         this.pending.clear();
         this.blocklist = Collections.emptySet();
+        this.state = State.OFFLINE;
         this.checkDueAt = -1L;
+        this.checkInFlight = false;
+        this.failures = 0;
         this.lastWorld = null;
+    }
+
+    /** Пауза перед повтором: 10.5 → 21 → 42 → 60 сек. */
+    private long retryDelay() {
+        long delay = CHECK_COOLDOWN_MS << Math.min(this.failures, 3);
+        return Math.min(delay, RETRY_MAX_MS);
     }
 
     /**
@@ -234,20 +282,36 @@ implements QuickImports {
      */
     @EventHandler
     public void onTick(TickEvent e) {
+        if (this.state == State.OFFLINE || this.state == State.NO_API && mc.isInSingleplayer()) {
+            return;
+        }
         if (mc.world != this.lastWorld) {
             this.lastWorld = mc.world;
             if (mc.world != null) {
+                // Смена мира — возможно, прокси перекинул на другой сервер. Если запрос уже в пути,
+                // повтор уйдёт после ответа (onTick не шлёт, пока checkInFlight).
                 this.scheduleCheck(0L);
             }
         }
         long now = System.currentTimeMillis();
-        if (this.checkDueAt < 0L || now < this.checkDueAt || mc.player == null) {
+        boolean channel = available(FEATURE_CONTROL);
+        if (this.state == State.NO_API) {
+            if (!channel) {
+                return;
+            }
+            // Канал появился позже (или прокси перекинул на сервер с LiteAPI) — снова закрываемся до ответа.
+            this.state = State.AWAITING;
+            this.scheduleCheck(0L);
+        }
+        if (!channel) {
+            // На адресе HolyWorld остаёмся закрытыми и ждём канал сколько угодно; на прочих серверах считаем, что LiteAPI нет.
+            if (this.state == State.AWAITING && !ServerIdentity.isHolyWorld() && now - this.joinedAt > CHANNEL_WAIT_MS) {
+                this.state = State.NO_API;
+                this.checkDueAt = -1L;
+            }
             return;
         }
-        if (!available(FEATURE_CONTROL)) {
-            if (now - this.checkDueAt > CHANNEL_WAIT_MS) {
-                this.checkDueAt = -1L; // сервер без LiteAPI — нечего проверять
-            }
+        if (this.checkInFlight || this.checkDueAt < 0L || now < this.checkDueAt || mc.player == null) {
             return;
         }
         if (now - this.lastCheckAt < CHECK_COOLDOWN_MS) {
@@ -270,15 +334,23 @@ implements QuickImports {
         JsonObject payload = new JsonObject();
         payload.addProperty("client", CLIENT_ID);
         payload.add("features", features);
+        int requestSession = this.session;
+        this.checkInFlight = true;
         this.request(FEATURE_CONTROL, "checkFeatures", payload).whenComplete((response, error) -> mc.execute(() -> {
+            if (requestSession != this.session) {
+                return; // ответ относится к прошлому подключению
+            }
+            this.checkInFlight = false;
             if (error != null) {
+                // Любая ошибка — повтор. Прежний блок-лист (или полная блокировка) остаётся в силе.
                 Throwable cause = error.getCause() != null ? error.getCause() : error;
-                if (cause instanceof LiteApiException api && "RATE_LIMITED".equals(api.code)) {
-                    this.scheduleCheck(CHECK_COOLDOWN_MS);
-                }
-                LOGGER.warn("[LiteAPI] checkFeatures не удался: {}", cause.toString());
+                long delay = this.retryDelay();
+                this.failures++;
+                this.scheduleCheck(delay);
+                LOGGER.warn("[LiteAPI] checkFeatures не удался ({}), повтор через {} с", cause.toString(), delay / 1000.0);
                 return;
             }
+            this.failures = 0;
             this.applyBlocklist(response);
         }));
     }
@@ -293,7 +365,13 @@ implements QuickImports {
                 }
             }
         }
+        if (this.state == State.OFFLINE) {
+            return; // пришло после выхода с сервера
+        }
         this.blocklist = Collections.unmodifiableSet(list);
+        this.state = State.RECEIVED;
+        // Заблокированное выключается и пропадает из всех GUI сразу, не дожидаясь тика.
+        ServerRestrictions.getInstance().enforceNow();
         LOGGER.info("[LiteAPI] блок-лист HolyWorld: {} функц.", list.size());
     }
 

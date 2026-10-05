@@ -1,6 +1,7 @@
 package ru.mentions.module.impl.display.interfaceimpl;
 
 import code.wiosvisual.events.render.DrawEvent;
+import code.wiosvisual.utils.client.EffectNames;
 import ru.mentions.module.api.settings.impl.DragSetting;
 import ru.mentions.module.impl.display.InterFace;
 import ru.mentions.theme.ThemeColor;
@@ -54,6 +55,7 @@ public class Potions implements IMinecraft {
     private static  float SEP_PADDING_X = 4F * S;
     private static  float SEP_OFFSET_Y = 3.2F * S;
     private static  float SCROLL_OFFSET_Y = 4F * S;
+    private static  float PILL_PAD = 3F * S;
 
     private ru.mentions.utils.animation.satoshi.Animation animation1 = new EaseInOutQuad(300,1);
     private ru.mentions.utils.animation.satoshi.Animation animation2 = new EaseInOutQuad(300,1);
@@ -84,10 +86,11 @@ public class Potions implements IMinecraft {
         SEP_PADDING_X = 4F * S;
         SEP_OFFSET_Y = 3.2F * S;
         SCROLL_OFFSET_Y = 4F * S;
+        PILL_PAD = 3F * S;
 
         for (StatusEffectInstance effect : currentEffects) {
-            String rawName = effect.getEffectType().value().getName().getString();
-            String name = capitalizeFirst(rawName);
+            if (EffectNames.hidden(effect)) continue;
+            String name = EffectNames.of(effect.getEffectType());
             int amplifier = effect.getAmplifier() + 1;
             String duration = getDurationString(effect);
             boolean isNegative = effect.getEffectType().value().getCategory() == StatusEffectCategory.HARMFUL;
@@ -134,9 +137,9 @@ public class Potions implements IMinecraft {
         font.draw("Potions", x + TITLE_TEXT_X, y + TITLE_TEXT_Y, TITLE_TEXT, ColorUtil.multAlpha(ColorUtil.getColor(240), alpha2));
 
         List<EffectData> sortedEffects = displayedEffects.values().stream()
-                .sorted(Comparator.comparingInt((EffectData data) ->
-                        data.name.length() + data.duration.length()
-                ).reversed())
+                // Порядок не прыгает при смене длины таймера (10:00 → 9:59): только по названию.
+                .sorted(Comparator.comparingInt((EffectData data) -> label(data).length()).reversed()
+                        .thenComparing(data -> data.name))
                 .collect(Collectors.toList());
 
         // Заголовок «Potions» всегда сверху списка эффектов.
@@ -159,7 +162,7 @@ public class Potions implements IMinecraft {
             }
 
             // Ширина по содержимому: отступ, иконка, название, зазор, таймер, отступ — длинное название растягивает панель, короткое нет.
-            float rowW = ROW_PADDING_X * 2F + ICON + 4F * S + font.getWidth(label(data), ROW_TEXT) + 8F * S + font.getWidth(data.duration, ROW_TEXT);
+            float rowW = ROW_PADDING_X * 2F + ICON + 4F * S + font.getWidth(label(data), ROW_TEXT) + 8F * S + font.getWidth(data.duration, ROW_TEXT) + PILL_PAD * 2F;
 
             w = Math.max(w, rowW * a);
             h += ROW_HEIGHT * a;
@@ -196,14 +199,18 @@ public class Potions implements IMinecraft {
             int lvlColor  = bad ? ColorUtil.getColor(170, 55, 55, alpha * a) : ColorUtil.getColor(150, alpha * a);
             int timeColor = data.durationTicks <= 100 ? ColorUtil.getColor(255, 90, 90, alpha * a) : ColorUtil.getColor(235, alpha * a);
 
-            String effectname = data.name + " " + ColorFormatting.getColor(lvlColor) + roman(lvl);
+            String effectname = lvl > 1 ? data.name + " " + ColorFormatting.getColor(lvlColor) + roman(lvl) : data.name;
 
             font.draw(effectname, x + ROW_PADDING_X + ICON + 4F * S - addX, offsetY, ROW_TEXT, nameColor);
 
             String key = data.duration;
             float timeWidth = font.getWidth(key, ROW_TEXT);
 
-            drawDuration(font, data, x + addX - ROW_PADDING_X + w - timeWidth, offsetY, ROW_TEXT, timeColor);
+            // Тёмно-серая плашка под временем эффекта.
+            float timeX = x + addX - ROW_PADDING_X - PILL_PAD + w - timeWidth;
+            RenderUtil.Render2D.rect(timeX - PILL_PAD, offsetY - 2.2F * S, timeWidth + PILL_PAD * 2F, ROW_TEXT + 3.6F * S,
+                    ColorUtil.getColor(30, 30, 33, 0.85F * alpha * a), 2.5F * S);
+            drawDuration(font, data, timeX, offsetY, ROW_TEXT, timeColor);
 
             drawEffectIcon(eventDisplay, data, x + ROW_PADDING_X, offsetY, alpha * a);
 
@@ -252,7 +259,7 @@ public class Potions implements IMinecraft {
 
     private String label(EffectData data) {
         int lvl = data.effectInstance.getAmplifier() + 1;
-        return data.name + " " + roman(lvl);
+        return lvl > 1 ? data.name + " " + roman(lvl) : data.name;
     }
 
     private void drawEffectIcon(DrawEvent eventDisplay, EffectData data, float x, float y, float alpha) {
@@ -272,7 +279,7 @@ public class Potions implements IMinecraft {
     }
 
     private String getDurationString(StatusEffectInstance effect) {
-        if (effect.isInfinite()) return "∞";
+        if (EffectNames.isInfinite(effect)) return "∞";
         int t = effect.getDuration() / 20;
         return String.format("%d:%02d", t / 60, t % 60);
     }

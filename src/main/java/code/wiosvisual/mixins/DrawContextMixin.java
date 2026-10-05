@@ -16,6 +16,7 @@ package code.wiosvisual.mixins;
 import code.wiosvisual.display.hud.CoolDowns;
 import code.wiosvisual.display.hud.HudTheme;
 import code.wiosvisual.features.impl.render.Hud;
+import code.wiosvisual.utils.client.ItemCooldowns;
 import code.wiosvisual.utils.client.chat.StringHelper;
 import code.wiosvisual.utils.display.color.ColorAssist;
 import code.wiosvisual.utils.display.render.GuiRenderState;
@@ -72,42 +73,23 @@ public class DrawContextMixin {
     }
 
     /**
-     * Перезарядка предмета прямо в слоте: хук общий для хотбара и всех
+     * Перезарядка предмета прямо в слоте: хук общий для хотбара, Inventory HUD и всех
      * экранов-контейнеров, потому что оверлей слота рисуется одним методом.
+     * Ванильная заливка кд остаётся, поверх — жёлтые секунды в левом верхнем углу.
+     * Кд берётся из менеджера кд игрока по группе, поэтому видны и донатные предметы.
      */
     @Inject(method={"drawStackOverlay(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/item/ItemStack;IILjava/lang/String;)V"}, at={@At(value="RETURN")})
     private void wiosvisual$drawSlotCooldown(TextRenderer textRenderer, ItemStack stack, int x, int y, String countOverride, CallbackInfo ci) {
-        Hud hud;
-        if (!Hud.slotCooldowns.isValue() || (hud = Hud.getInstance()) == null || !hud.isState()) {
+        if (!Hud.slotCooldowns.isValue()) {
             return;
         }
-        int seconds = CoolDowns.getRemainingSeconds(stack);
+        int seconds = ItemCooldowns.remainingSeconds(stack);
         if (seconds <= 0) {
             return;
         }
-        String text = seconds >= 60 ? StringHelper.getDuration(seconds) : String.valueOf(seconds);
+        String text = seconds >= 60 ? seconds / 60 + "m" : String.valueOf(seconds);
         DrawContext context = (DrawContext)((Object)this);
-        org.joml.Matrix3x2fStack matrices = context.getMatrices();
-        matrices.pushMatrix();
-        matrices.translate(0.0f, 0.0f);
-        context.drawCenteredTextWithShadow(textRenderer, text, x + 8, y + 5, DrawContextMixin.wiosvisual$cooldownColor(seconds));
-        matrices.popMatrix();
-    }
-
-    /**
-     * Цвет числа перезарядки в слоте: чем меньше остаток, тем «зеленее».
-     * 0с — зелёный, дальше жёлтый и оранжевый, 30с и больше — красный.
-     */
-    @Unique
-    private static int wiosvisual$cooldownColor(int seconds) {
-        float t = Math.min(1.0f, Math.max(0.0f, (float)seconds / 30.0f));
-        if (t < 0.34f) {
-            return ColorAssist.interpolate(ColorAssist.green, ColorAssist.yellow, t / 0.34f);
-        }
-        if (t < 0.67f) {
-            return ColorAssist.interpolate(ColorAssist.yellow, ColorAssist.orange, (t - 0.34f) / 0.33f);
-        }
-        return ColorAssist.interpolate(ColorAssist.orange, ColorAssist.red, (t - 0.67f) / 0.33f);
+        context.drawTextWithShadow(textRenderer, text, x, y, 0xFFFFFF55);
     }
 
 }

@@ -516,9 +516,11 @@ public class Menu extends Screen implements IMinecraft {
         if (Math.abs(scrollTarget - scrollAnim) < 0.05F && Math.abs(scrollVel) < 0.05F) { scrollAnim = scrollTarget; scrollVel = 0; }
 
         java.util.List<Feature> visM = new java.util.ArrayList<>();
+        dropHiddenModules();
         for (Feature f : Features.all()) {
-            // Модули, запрещённые на текущем сервере (ServerRestrictions), в меню не показываются.
-            f.getAnimation14().setDirection(!f.module().isHidden() && moduleVisible(f) ? Direction.FORWARDS : Direction.BACKWARDS);
+            // Модули, запрещённые на текущем сервере (ServerRestrictions), убраны мгновенно в dropHiddenModules().
+            if (f.module().isHidden()) continue;
+            f.getAnimation14().setDirection(moduleVisible(f) ? Direction.FORWARDS : Direction.BACKWARDS);
             if (f.getAnimation14().getOutput() > 0) visM.add(f);
         }
 
@@ -1033,11 +1035,27 @@ public class Menu extends Screen implements IMinecraft {
 
     private void closeCheck() { if (exit && glomalAnim.isFinished()) { close(); exit = false; } }
 
+    /**
+     * Модуль, который сервер только что заблокировал, убирается мгновенно: закрываем его
+     * настройки и ожидание бинда без анимации, чтобы ни кадра нельзя было с ним взаимодействовать.
+     */
+    private void dropHiddenModules() {
+        if (select != null && select.module().isHidden()) {
+            select = null;
+            activeBind = null;
+            animation2.finish(Direction.BACKWARDS);
+        }
+        if (bindingModule != null && bindingModule.module().isHidden()) {
+            bindingModule = null;
+        }
+    }
+
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         float mouseX = (int) (click.x() / scaleFix);
         float mouseY = (int) (click.y() / scaleFix);
 
+        dropHiddenModules();
 
 
         if (bindingModule != null) { bindingModule = null; GuiSounds.bindReset(); return true; }
@@ -1098,6 +1116,7 @@ public class Menu extends Screen implements IMinecraft {
             for (Hit hit : moduleHits) {
                 if (!hit.contains(mouseX, mouseY)) continue;
                 Feature f = (Feature) hit.payload;
+                if (f.module().isHidden()) continue;
                 if (button == 2) { bindingModule = f; GuiSounds.bindStart(); return true; }
                 if (button == 1 || (button == 0 && mouseX < hit.x + 22 * S)) {
                     select = (f == select) ? null : f; settingScrollTarget = 0; settingScrollAnim = 0; GuiSounds.expand(select == f);
@@ -1240,6 +1259,7 @@ public class Menu extends Screen implements IMinecraft {
     public boolean keyPressed(KeyInput input) {
         int key = input.key();
 
+        dropHiddenModules();
         if (bindingModule != null) {
             boolean reset = key == 256 || key == 261;
             bindingModule.setKey(reset ? -1 : key); bindingModule = null;

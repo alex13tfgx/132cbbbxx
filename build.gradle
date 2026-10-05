@@ -46,6 +46,9 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    // ModMenu вшит в jar: «Модификации» в главном меню — список модов и их настройки.
+    // Самодостаточен (свои модули Fabric API и placeholder-api внутри).
+    include(modImplementation("com.terraformersmc:modmenu:17.0.1"))
 
     include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.3")))
 

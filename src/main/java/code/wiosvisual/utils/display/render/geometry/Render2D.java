@@ -99,6 +99,9 @@ implements QuickImports {
             font.drawString(matrix, countText, textX + 0.5f, textY + 0.5f, -16777216);
             font.drawString(matrix, countText, textX, textY, -1);
         }
+        if (drawItemInSlot && code.wiosvisual.features.impl.render.Hud.slotCooldowns.isValue()) {
+            code.wiosvisual.utils.client.ItemCooldowns.drawSlot(context, stack, 0, 0);
+        }
         matrix.pop();
     }
 

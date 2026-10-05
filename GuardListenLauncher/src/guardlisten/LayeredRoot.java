@@ -114,7 +114,7 @@ final class LayeredRoot extends JPanel {
         }
         Ui.aa(g);
         g.setColor(Ui.BORDER);
-        g.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, 22, 22));
+        g.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, 18, 18));
         g.dispose();
     }
 }

@@ -143,6 +143,16 @@ implements QuickImports {
      */
     @EventHandler
     public void onTick(TickEvent e) {
+        this.enforceNow();
+    }
+
+    /** Модуль включён игроком, но сейчас выключен нами из-за запрета — в конфиг он сохраняется включённым. */
+    public static boolean isSuppressed(Module module) {
+        return INSTANCE.suppressed.contains(module);
+    }
+
+    /** Сверить модули с запретами прямо сейчас (например, сразу после нового блок-листа LiteAPI). */
+    public void enforceNow() {
         if (mc.player == null) {
             return;
         }
@@ -159,7 +169,8 @@ implements QuickImports {
             }
             it.remove();
             if (!module.isState()) {
-                module.setState(true);
+                // Тихо: после каждого входа на сервер с LiteAPI возвращаются все модули разом.
+                module.setStateQuietly(true);
             }
         }
         List<String> turnedOff = new ArrayList<>();

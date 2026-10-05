@@ -106,7 +106,8 @@ public class Notify implements element {
 
         if (notifEffects.getValue()) {
             for (StatusEffectInstance effect : mc.player.getStatusEffects()) {
-                String name = effect.getEffectType().value().getName().getString();
+                if (code.wiosvisual.utils.client.EffectNames.hidden(effect)) continue;
+                String name = code.wiosvisual.utils.client.EffectNames.of(effect.getEffectType());
                 int ticks = effect.getDuration();
                 if (ticks <= 0) continue;
                 if (ticks > 200) {

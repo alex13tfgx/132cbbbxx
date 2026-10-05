@@ -21,9 +21,9 @@ import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 /**
- * Китайская шляпа над головой — порт ChinaHat из Pulse. Полупрозрачный конус,
- * плотнее к верхушке, и чёткое кольцо по краю. Видна только от третьего лица:
- * в первом лице конус висел бы прямо перед камерой.
+ *
+ *
+ *
  */
 public class ChinaHat
 extends Module {

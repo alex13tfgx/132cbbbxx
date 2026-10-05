@@ -48,6 +48,8 @@ public abstract class SplashOverlayMixin {
     private long reloadCompleteTime;
     @Shadow
     private long reloadStartTime;
+    @Shadow
+    private float progress;
 
     @Inject(method={"render"}, at={@At(value="HEAD")})
     private void onSplashRenderHead(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
@@ -55,7 +57,7 @@ public abstract class SplashOverlayMixin {
         if (opacity <= 0.01f) {
             return;
         }
-        StartupBackgroundRenderer.drawBackground(context, 0.0f, 0.0f, context.getScaledWindowWidth(), context.getScaledWindowHeight(), opacity);
+        StartupBackgroundRenderer.drawLoader(context, context.getScaledWindowWidth(), context.getScaledWindowHeight(), this.progress, opacity);
     }
 
     @Unique
@@ -82,7 +84,7 @@ public abstract class SplashOverlayMixin {
         context.drawTexture(pipeline, texture, x, y, u, v, width, height, regionWidth, regionHeight, textureWidth, textureHeight, color);
     }
 
-    /** Фирменная красная заливка Mojang и полоса прогресса пропускаются: остаётся фон Wios. */
+    /** Фирменная красная заливка Mojang и ванильная полоса прогресса пропускаются: остаётся чёрно-белый лоадер Wios. */
     @Redirect(method={"render"}, at=@At(value="INVOKE", target="Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"), require=0)
     private void skipBrandFill(DrawContext context, int x1, int y1, int x2, int y2, int color) {
     }

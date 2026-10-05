@@ -22,6 +22,7 @@ import ru.mentions.module.impl.display.interfaceimpl.KeyBinds;
 import ru.mentions.module.impl.display.interfaceimpl.MusicHud;
 import ru.mentions.module.impl.display.interfaceimpl.Notify;
 import ru.mentions.module.impl.display.interfaceimpl.ArmorHud;
+import ru.mentions.module.impl.display.interfaceimpl.InventoryHud;
 import ru.mentions.module.impl.display.interfaceimpl.Potions;
 import ru.mentions.module.impl.display.interfaceimpl.TargetHud;
 import ru.mentions.module.impl.display.interfaceimpl.WaterMark;
@@ -48,7 +49,8 @@ public class InterFace extends Module {
             new BooleanSetting("Music Player", true),
             new BooleanSetting("Notifications", true),
             new BooleanSetting("Target Hud", true),
-            new BooleanSetting("Броня", true));
+            new BooleanSetting("Броня", true),
+            new BooleanSetting("Inventory", true));
 
     public SliderSetting volume = new SliderSetting(this, "Громкость уведомления", 0.5F, 0.1F, 1.0F, 0.1F);
     public ModeSetting typeNotify = new ModeSetting(this, "Тип уведомления",
@@ -67,7 +69,7 @@ public class InterFace extends Module {
     public DragSetting music = new DragSetting(this, "Music Player", new Vector2f(10, 400));
     public DragSetting notifications = new DragSetting(this, "Notifications", new Vector2f(0, 200));
     public DragSetting targetHudDrag = new DragSetting(this, "Target Hud", new Vector2f(90, 40));
-    public DragSetting armorDrag = new DragSetting(this, "Броня", new Vector2f(10, 200));
+    public DragSetting inventoryDrag = new DragSetting(this, "Inventory", new Vector2f(10, 260));
 
     private final WaterMark waterMarkElemnt = new WaterMark();
     private final KeyBinds keyBinds = new KeyBinds();
@@ -76,6 +78,7 @@ public class InterFace extends Module {
     private final Notify notifyHud = new Notify();
     private final TargetHud targetHud = new TargetHud();
     private final ArmorHud armorHud = new ArmorHud();
+    private final InventoryHud inventoryHud = new InventoryHud();
 
     /** Цель из Target Hud (или null) — для Hud «Броня». */
     public net.minecraft.entity.LivingEntity armorTarget() {
@@ -88,7 +91,7 @@ public class InterFace extends Module {
 
     public InterFace() {
         this.notifications.lockX = true;
-        this.drags = new DragSetting[]{this.waterMark, this.keyBind, this.potion, this.music, this.notifications, this.targetHudDrag, this.armorDrag};
+        this.drags = new DragSetting[]{this.waterMark, this.keyBind, this.potion, this.music, this.notifications, this.targetHudDrag, this.inventoryDrag};
         FontInitializer.register();
         this.loadPositions();
     }
@@ -209,7 +212,10 @@ public class InterFace extends Module {
             this.targetHud.onRender(this.targetHudDrag, this, event);
         }
         if (this.element.getValue("Броня")) {
-            this.armorHud.onRender(this.armorDrag, this, event);
+            this.armorHud.onRender(event);
+        }
+        if (this.element.getValue("Inventory")) {
+            this.inventoryHud.onRender(this.inventoryDrag, this, event);
         }
     }
 

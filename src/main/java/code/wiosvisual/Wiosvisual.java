@@ -221,7 +221,6 @@ implements ModInitializer {
         // HolyWorld LiteAPI: каналы и проверка заблокированных функций (Feature Control).
         code.wiosvisual.utils.client.server.HolyWorldLiteApi.register();
         EventManager.register(code.wiosvisual.utils.client.server.HolyWorldLiteApi.getInstance());
-        code.wiosvisual.features.impl.render.FoodInfo.init();
     }
 
     private void initCommands() {

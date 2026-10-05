@@ -226,6 +226,7 @@ extends Screen {
         int alpha = (int)(255.0f * this.openAnim);
         int accent = ColorAssist.getClientColor();
         this.refreshCategories();
+        this.dropHiddenModules();
         float totalWidth = COLUMN_WIDTH * (float)this.categories.length + 10.0f * (float)(this.categories.length - 1);
         this.panelX = (float)context.getScaledWindowWidth() / 2.0f - totalWidth / 2.0f;
         this.panelY = (float)context.getScaledWindowHeight() / 2.0f - GUI_TOTAL_HEIGHT / 2.0f;
@@ -641,6 +642,28 @@ extends Screen {
 
     // ── ввод ─────────────────────────────────────────────────────────────────
 
+    /** Модуль, заблокированный сервером, пропадает мгновенно вместе с открытыми настройками и ожиданием бинда. */
+    private void dropHiddenModules() {
+        if (this.bindingModule != null && this.bindingModule.isHidden()) {
+            this.bindingModule = null;
+        }
+        boolean changed = false;
+        for (java.util.Iterator<Module> it = this.expanded.iterator(); it.hasNext();) {
+            Module module = it.next();
+            if (!module.isHidden()) continue;
+            it.remove();
+            this.expandAnim.remove(module);
+            changed = true;
+        }
+        if (changed) {
+            this.bindingSetting = null;
+            this.editingText = null;
+            this.draggingSliders.clear();
+            this.draggingPicker = null;
+            this.draggingHue = null;
+        }
+    }
+
     @Override
     public boolean mouseClicked(net.minecraft.client.gui.Click wiosClick, boolean wiosDbl) {
         double mouseX = wiosClick.x();
@@ -649,6 +672,7 @@ extends Screen {
         if (this.closing) {
             return true;
         }
+        this.dropHiddenModules();
         if (this.bindingSetting != null) {
             this.bindingSetting.setKey(-100 + button);
             this.bindingSetting = null;
@@ -672,6 +696,7 @@ extends Screen {
         this.searchActive = false;
         this.editingText = null;
         for (ModuleSlot slot : this.slots) {
+            if (slot.module.isHidden()) continue;
             if (CatlaGuiScreen.inRect(mouseX, mouseY, slot.x, slot.y, MOD_ITEM_WIDTH, MOD_COLLAPSED_HEIGHT)) {
                 if (button == 2) {
                     this.bindingModule = slot.module;
@@ -832,6 +857,7 @@ extends Screen {
         int keyCode = wiosKey.key();
         int scanCode = wiosKey.scancode();
         int modifiers = wiosKey.modifiers();
+        this.dropHiddenModules();
         if (this.closing) {
             return true;
         }
@@ -920,6 +946,7 @@ extends Screen {
     public boolean charTyped(net.minecraft.client.input.CharInput wiosChar) {
         char chr = (char) wiosChar.codepoint();
         int modifiers = wiosChar.modifiers();
+        this.dropHiddenModules();
         if (this.closing) {
             return true;
         }

@@ -71,7 +71,18 @@ extends AbstractDraggable {
         float panelY = this.getY();
         float startX = panelX + 5.0f;
         float startY = panelY + 5.0f;
-        // Ячейки не рисуются вовсе: на экране остаются только сами предметы.
+        // Прозрачная тёмная панель и отдельная квадратная ячейка под каждый слот.
+        int panelColor = 0x8C141416;
+        int cellColor = 0x59000000;
+        rectangle.render(ShapeProperties.create(matrix, panelX, panelY, panelWidth, panelHeight).round(3.0f).color(panelColor, panelColor, panelColor, panelColor).build());
+        for (int row = 0; row < 3; ++row) {
+            for (int col = 0; col < 9; ++col) {
+                float cellX = startX + (float)col * 18.0f - 0.5f;
+                float cellY = startY + (float)row * 18.0f - 0.5f;
+                rectangle.render(ShapeProperties.create(matrix, cellX, cellY, 17.0f, 17.0f).round(1.5f).color(cellColor, cellColor, cellColor, cellColor).build());
+            }
+        }
+        Rectangle.flushPending();
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
                 int slot = col + row * 9 + 9;

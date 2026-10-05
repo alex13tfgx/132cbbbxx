@@ -140,6 +140,8 @@ extends Screen {
     private final Map<ModuleCategory, Float> scrollTarget = new HashMap<>();
     private final Map<Object, Float> catAnim = new HashMap<>();
     private final List<Hit> hits = new ArrayList<>();
+    /** Модули, карточки которых были на экране в прошлом кадре: по ним видно, что сервер заблокировал показанный модуль. */
+    private final List<Module> shownModules = new ArrayList<>();
 
     private ModuleCategory[] categories = ModuleCategory.values();
     private ModuleCategory active = ModuleCategory.RENDER;
@@ -165,6 +167,8 @@ extends Screen {
     private boolean searchFocused;
     private String searchText = "";
     private boolean closing;
+    /** Экран, на который вернуться при закрытии (меню); null — просто закрыть (в игре). */
+    private net.minecraft.client.gui.screen.Screen returnScreen;
     private float openAnim;
     private float contentAnim = 1.0f;
     private float barY = -1.0f;
@@ -189,8 +193,15 @@ extends Screen {
         return instance;
     }
 
+    /** Открыть модули из экрана (главного меню): при закрытии вернуться на него. */
+    public void openGui(net.minecraft.client.gui.screen.Screen returnTo) {
+        openGui();
+        this.returnScreen = returnTo;
+    }
+
     /** Точка входа: биндом или из ModuleSwitcher. */
     public void openGui() {
+        this.returnScreen = null;
         this.closing = false;
         this.openAnim = 0.0f;
         this.contentAnim = 0.0f;
@@ -245,7 +256,8 @@ extends Screen {
             this.openAnim = 1.0f;
         }
         if (this.closing && this.openAnim <= 0.02f) {
-            MinecraftClient.getInstance().setScreen(null);
+            MinecraftClient.getInstance().setScreen(this.returnScreen);
+            this.returnScreen = null;
             return;
         }
         this.contentAnim = approach(this.contentAnim, 1.0f, SPEED_CONTENT, dt);
@@ -253,7 +265,9 @@ extends Screen {
         // а не цвет пользовательской темы — единый брендинг ReallyVisuals-стиля по всему клиенту.
         ACCENT = DEFAULT_ACCENT;
         this.refreshCategories();
+        this.dropHiddenModules();
         this.hits.clear();
+        this.shownModules.clear();
 
         MatrixStack matrices = GuiCompat.stack(context);
         float a = easeOut(this.openAnim);
@@ -587,6 +601,7 @@ extends Screen {
         }
 
         List<Module> modules = this.modules();
+        this.shownModules.addAll(modules);
         if (modules.isEmpty()) {
             FontRenderer font = font(10.0f, true);
             String title = this.searchText.isEmpty() ? "No modules" : "Nothing found";
@@ -1504,6 +1519,7 @@ extends Screen {
         double mouseX = wiosClick.x();
         double mouseY = wiosClick.y();
         int button = wiosClick.button();
+        this.dropHiddenModules();
         // Идёт назначение бинда: СКМ и боковые кнопки мыши становятся биндом.
         // ЛКМ и ПКМ оставляем интерфейсу — ими отменяют назначение и снимают бинд.
         if (button >= 2 && BindCodes.isMouse(button) && this.assignPendingBind(button)) {
@@ -1582,6 +1598,56 @@ extends Screen {
         return true;
     }
 
+    /**
+     * Модуль, заблокированный сервером, пропадает мгновенно: сбрасываем ожидание бинда,
+     * редактирование и перетаскивание его настроек, а если его карточка была на экране —
+     * и зоны клика прошлого кадра, чтобы по ней нельзя было нажать до следующей отрисовки.
+     */
+    private void dropHiddenModules() {
+        List<Module> hidden = new ArrayList<>();
+        Wiosvisual client = Wiosvisual.getInstance();
+        if (client != null && client.getModuleRepository() != null) {
+            for (Module module : client.getModuleRepository().modules()) {
+                if (module.isHidden()) hidden.add(module);
+            }
+        }
+        if (hidden.isEmpty()) {
+            return;
+        }
+        EXPANDED.removeAll(hidden);
+        if (this.bindingModule != null && this.bindingModule.isHidden()) this.bindingModule = null;
+        if (ownedBy(hidden, this.bindingSetting)) this.bindingSetting = null;
+        if (ownedBy(hidden, this.editingText)) this.editingText = null;
+        if (ownedBy(hidden, this.openSelect)) this.openSelect = null;
+        if (ownedBy(hidden, this.openPicker)) this.openPicker = null;
+        if (ownedBy(hidden, this.draggingSlider)) this.draggingSlider = null;
+        if (ownedBy(hidden, this.draggingSquare)) this.draggingSquare = null;
+        if (ownedBy(hidden, this.draggingHue)) this.draggingHue = null;
+        for (Module module : this.shownModules) {
+            if (module.isHidden()) {
+                this.hits.clear();
+                this.shownModules.clear();
+                break;
+            }
+        }
+    }
+
+    private static boolean ownedBy(List<Module> modules, Setting setting) {
+        if (setting == null) return false;
+        for (Module module : modules) {
+            if (containsSetting(module.settings(), setting)) return true;
+        }
+        return false;
+    }
+
+    private static boolean containsSetting(List<? extends Setting> settings, Setting target) {
+        for (Setting setting : settings) {
+            if (setting == target) return true;
+            if (setting instanceof GroupSetting group && containsSetting(group.getSubSettings(), target)) return true;
+        }
+        return false;
+    }
+
     /** Записывает код в модуль или BindSetting, который сейчас ждёт бинд. */
     private boolean assignPendingBind(int code) {
         if (this.bindingModule != null) {
@@ -1602,6 +1668,7 @@ extends Screen {
         int keyCode = wiosKey.key();
         int scanCode = wiosKey.scancode();
         int modifiers = wiosKey.modifiers();
+        this.dropHiddenModules();
         if (this.bindingModule != null) {
             this.bindingModule.setKey(keyCode == 256 || keyCode == 261 ? -1 : keyCode);
             this.bindingModule = null;
@@ -1654,6 +1721,7 @@ extends Screen {
     public boolean charTyped(net.minecraft.client.input.CharInput wiosChar) {
         char symbol = (char) wiosChar.codepoint();
         int modifiers = wiosChar.modifiers();
+        this.dropHiddenModules();
         if (this.searchFocused) {
             this.searchText = this.searchText + symbol;
             this.scrollTarget.clear();

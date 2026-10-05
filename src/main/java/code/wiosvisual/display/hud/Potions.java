@@ -31,6 +31,7 @@ import code.wiosvisual.display.hud.Notifications;
 import code.wiosvisual.display.hud.TimerTextAnimator;
 import code.wiosvisual.events.packet.PacketEvent;
 import code.wiosvisual.features.impl.render.Hud;
+import code.wiosvisual.utils.client.EffectNames;
 import code.wiosvisual.utils.client.managers.api.draggable.AbstractDraggable;
 import code.wiosvisual.utils.client.sound.SoundManager;
 import code.wiosvisual.utils.display.color.ColorAssist;
@@ -96,7 +97,7 @@ extends AbstractDraggable {
         if (!Hud.interfaceSettings.isSelected("Potions") || !Hud.getInstance().state) {
             return false;
         }
-        return !this.list.isEmpty() || PlayerInteractionHelper.isChat(Potions.mc.currentScreen);
+        return this.visibleEffects() || PlayerInteractionHelper.isChat(Potions.mc.currentScreen);
     }
 
     @Override
@@ -104,7 +105,7 @@ extends AbstractDraggable {
         long currentTime;
         this.list.removeIf(p -> p.anim.isFinished(Direction.BACKWARDS));
         // TODO(port 1.21.11): StatusEffectInstance.method_5585(update) стал серверным (ServerWorld,LivingEntity,Runnable); в HUD не тикаем.
-        if (Hud.getInstance().notificationSettings.isSelected("\u0420\u2014\u0420\u00b0\u0420\u0454\u0420\u00b0\u0420\u0405\u0421\u2021\u0420\u0451\u0420\u0406\u0420\u00b0\u0421\u040b\u0421\u2030\u0420\u00b5\u0420\u0458\u0421\u0403\u0421\u040f \u0420\u00b7\u0420\u00b5\u0420\u00bb\u0421\u040a\u0420\u00b5") && !PlayerInteractionHelper.nullCheck()) {
+        if (Hud.getInstance().notificationSettings.isSelected("Заканчивающемся зелье") && !PlayerInteractionHelper.nullCheck()) {
             ArrayList<String> effectsToRemove = new ArrayList<String>();
             for (Map.Entry<String, StatusEffectInstance> entry : this.activeEffects.entrySet()) {
                 String effectKey = entry.getKey();
@@ -165,7 +166,7 @@ extends AbstractDraggable {
                 StatusEffectInstance newEffect = new StatusEffectInstance(effectId, effect.getDuration(), effect.getAmplifier(), effect.isAmbient(), effect.shouldShowParticles(), effect.shouldShowIcon());
                 this.list.add(new Potion(newEffect, new Decelerate().setMs(150).setValue(1.0)));
                 this.activeEffects.put(effectKey, newEffect);
-                if (!isNewEffect || !Hud.getInstance().notificationSettings.isSelected("\u0420\u045f\u0420\u0455\u0420\u00bb\u0421\u0453\u0421\u2021\u0420\u00b5\u0420\u0405\u0420\u0405\u0420\u0455\u0420\u0458 \u0420\u00b7\u0420\u00b5\u0420\u00bb\u0421\u040a\u0420\u00b5")) break;
+                if (!isNewEffect || !Hud.getInstance().notificationSettings.isSelected("Полученном зелье")) break;
                 this.sendPotionReceivedNotification(newEffect);
                 break;
             }
@@ -174,7 +175,7 @@ extends AbstractDraggable {
                 String effectKey = effect.effect().getIdAsString();
                 this.list.stream().filter(s -> s.effect.getEffectType().getIdAsString().equals(effectKey)).forEach(s -> s.anim.setDirection(Direction.BACKWARDS));
                 StatusEffectInstance removedEffect = this.activeEffects.remove(effectKey);
-                if (removedEffect != null && Hud.getInstance().notificationSettings.isSelected("\u0420\u2014\u0420\u00b0\u0420\u0454\u0420\u00b0\u0420\u0405\u0421\u2021\u0420\u0451\u0420\u0406\u0420\u00b0\u0421\u040b\u0421\u2030\u0420\u00b5\u0420\u0458\u0421\u0403\u0421\u040f \u0420\u00b7\u0420\u00b5\u0420\u00bb\u0421\u040a\u0420\u00b5")) {
+                if (removedEffect != null && Hud.getInstance().notificationSettings.isSelected("Заканчивающемся зелье")) {
                     this.sendPotionEndedNotification(removedEffect);
                 }
                 this.warnedEffects.remove(effectKey);
@@ -203,6 +204,9 @@ extends AbstractDraggable {
     }
 
     private final DeltaHud.ListPanel deltaPanel = new DeltaHud.ListPanel();
+    {
+        this.deltaPanel.rightPill = true;
+    }
     private final FontRenderer deltaHeaderFont = Fonts.getSize(14, Fonts.Type.DEFAULT);
 
     private void drawMode1(DrawContext context) {
@@ -210,17 +214,18 @@ extends AbstractDraggable {
         this.renderSnapshot.clear();
         this.renderSnapshot.addAll(this.list);
         List<DeltaHud.Row> rows = new ArrayList<DeltaHud.Row>();
-        if (this.list.isEmpty() && PlayerInteractionHelper.isChat(Potions.mc.currentScreen)) {
-            rows.add(new DeltaHud.Row(1.0f, "Example", "**:**", 0xFFFFFFFF, null));
+        if (!this.visibleEffects() && PlayerInteractionHelper.isChat(Potions.mc.currentScreen)) {
+            rows.add(new DeltaHud.Row(1.0f, "Speed II", "1:30", 0xFFFFFFFF, null));
         } else {
             for (Potion potion : this.renderSnapshot) {
                 float animValue = potion.anim.getOutput().floatValue();
                 if (!(animValue > 0.0f)) continue;
                 StatusEffectInstance effect = potion.effect;
-                String name = capitalize(((StatusEffect)effect.getEffectType().value()).getName().getString());
+                if (EffectNames.hidden(effect)) continue;
+                String name = EffectNames.of(effect.getEffectType());
                 int amplifier = effect.getAmplifier();
                 if (amplifier > 0) {
-                    name = name + " " + (amplifier + 1);
+                    name = name + " " + roman(amplifier + 1);
                 }
                 String duration = this.getDuration(effect);
                 if (duration.equals("**:**")) {
@@ -253,10 +258,19 @@ extends AbstractDraggable {
         };
     }
 
+    private boolean visibleEffects() {
+        return this.list.stream().anyMatch(p -> !EffectNames.hidden(p.effect));
+    }
+
     private String getDuration(StatusEffectInstance pe) {
         int var1 = pe.getDuration();
         int mins = var1 / 1200;
-        return pe.isInfinite() || mins > 60 ? "**:**" : mins + ":" + String.format("%02d", var1 % 1200 / 20);
+        return EffectNames.isInfinite(pe) ? "**:**" : mins + ":" + String.format("%02d", var1 % 1200 / 20);
+    }
+
+    private static String roman(int level) {
+        String[] table = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+        return level >= 1 && level <= table.length ? table[level - 1] : String.valueOf(level);
     }
 
     private boolean isBadEffect(RegistryEntry<StatusEffect> effect) {
@@ -268,22 +282,25 @@ extends AbstractDraggable {
     }
 
     private void sendPotionReceivedNotification(StatusEffectInstance effect) {
-        String effectName = capitalize(((StatusEffect)effect.getEffectType().value()).getName().getString());
-        String message = effectName + " \u0420\u0457\u0420\u0455\u0420\u00bb\u0421\u0453\u0421\u2021\u0420\u00b5\u0420\u0405!";
+        if (EffectNames.hidden(effect)) return;
+        String effectName = EffectNames.of(effect.getEffectType());
+        String message = effectName + " получен!";
         Notifications.getInstance().addList((Text)Text.literal((String)message), 1000, (Object)SoundManager.ENABLE_MODULE, false, null);
         SoundManager.playSound(SoundManager.ENABLE_MODULE);
     }
 
     private void sendPotionEndedNotification(StatusEffectInstance effect) {
-        String effectName = capitalize(((StatusEffect)effect.getEffectType().value()).getName().getString());
-        String message = effectName + " \u0420\u00b7\u0420\u00b0\u0420\u0454\u0420\u0455\u0420\u0405\u0421\u2021\u0420\u0451\u0420\u00bb\u0421\u0403\u0421\u040f!";
+        if (EffectNames.hidden(effect)) return;
+        String effectName = EffectNames.of(effect.getEffectType());
+        String message = effectName + " закончился!";
         Notifications.getInstance().addList((Text)Text.literal((String)message), 1000, (Object)SoundManager.DISABLE_MODULE, false, null);
         SoundManager.playSound(SoundManager.DISABLE_MODULE);
     }
 
     private void sendPotionEndingSoonNotification(StatusEffectInstance effect) {
-        String effectName = capitalize(((StatusEffect)effect.getEffectType().value()).getName().getString());
-        String message = effectName + " \u0420\u00b7\u0420\u00b0\u0420\u0454\u0420\u0455\u0420\u0405\u0421\u2021\u0420\u0451\u0421\u201a\u0421\u0403\u0421\u040f \u0421\u2021\u0420\u00b5\u0421\u0402\u0420\u00b5\u0420\u00b7 10 \u0421\u0403\u0420\u00b5\u0420\u0454\u0421\u0453\u0420\u0405\u0420\u0491!";
+        if (EffectNames.hidden(effect)) return;
+        String effectName = EffectNames.of(effect.getEffectType());
+        String message = effectName + " закончится через 10 секунд!";
         Notifications.getInstance().addList((Text)Text.literal((String)message), 1000, null, false, null);
     }
 
@@ -334,7 +351,7 @@ extends AbstractDraggable {
                 float animValue = potion.anim.getOutput().floatValue();
                 if (!(animValue > 0.0f)) continue;
                 StatusEffectInstance effect = potion.effect;
-                String name = capitalize(((StatusEffect)effect.getEffectType().value()).getName().getString());
+                String name = EffectNames.of(effect.getEffectType());
                 String duration = this.getDuration(effect);
                 int amplifier = effect.getAmplifier();
                 boolean isBad = this.isBadEffect((RegistryEntry<StatusEffect>)effect.getEffectType());
@@ -378,10 +395,5 @@ extends AbstractDraggable {
     }
 
     private record Potion(StatusEffectInstance effect, Animation anim) {
-    }
-
-    /** Названия эффектов всегда с заглавной буквы, даже если перед ней коды цвета. */
-    private static String capitalize(String text) {
-        return ru.mentions.module.impl.display.interfaceimpl.Potions.capitalizeFirstPublic(text);
     }
 }

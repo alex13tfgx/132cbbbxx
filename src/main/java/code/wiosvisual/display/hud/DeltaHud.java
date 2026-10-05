@@ -61,6 +61,8 @@ public final class DeltaHud {
     /** Список строк под шапкой; хранит плавно меняющуюся ширину. */
     public static final class ListPanel {
         private float width = 0.0f;
+        /** Тёмно-серая плашка под правым столбцом (время в Potions). */
+        public boolean rightPill;
 
         public void reset() {
             this.width = 0.0f;
@@ -73,7 +75,7 @@ public final class DeltaHud {
             for (Row row : rows) {
                 if (row.anim() <= 0.0f) continue;
                 float leftPad = row.icon() != null ? 19.0f : 8.0f;
-                target = Math.max(target, leftPad + rowFont.getStringWidth(row.name()) + 8.0f + rowFont.getStringWidth(row.right()) + 7.0f);
+                target = Math.max(target, leftPad + rowFont.getStringWidth(row.name()) + 8.0f + rowFont.getStringWidth(row.right()) + 7.0f + (this.rightPill ? 4.0f : 0.0f));
             }
             this.width = this.width <= 0.0f ? target : this.width + (target - this.width) * 0.25f;
             float w = this.width;
@@ -98,14 +100,19 @@ public final class DeltaHud {
                 if (hasIcon) {
                     separator(rect, m, x + offX + 15.0f, drawY, ROW_H, a);
                 }
+                float rw = rowFont.getStringWidth(row.right());
+                float rx = x + offX + w - (this.rightPill ? 8.5f : 6.0f) - rw;
+                if (this.rightPill && rw > 0.0f) {
+                    int pill = clampAlpha(215.0f * a) << 24 | 0x1E1E21;
+                    rect.render(ShapeProperties.create(m, rx - 3.0f, drawY + 1.75f, rw + 6.0f, ROW_H - 3.5f).round(2.5f).color(pill, pill, pill, pill).build());
+                }
                 Rectangle.flushPending();
                 if (hasIcon) {
                     row.icon().draw(context, m, x + offX + 4.5f, drawY + (ROW_H - 8.0f) / 2.0f, 8.0f, a);
                 }
                 float ty = rowFont.getCenteredY(drawY, ROW_H);
                 rowFont.drawString(m, row.name(), x + offX + (hasIcon ? 19.0f : 8.0f), ty, withAlpha(row.nameColor(), a));
-                float rw = rowFont.getStringWidth(row.right());
-                rowFont.drawString(m, row.right(), x + offX + w - 6.0f - rw, ty, withAlpha(0xFFFFFFFF, 0.55f * a));
+                rowFont.drawString(m, row.right(), rx, ty, withAlpha(0xFFFFFFFF, this.rightPill ? 0.85f * a : 0.55f * a));
                 contentY += ROW_STEP * a;
             }
             Rectangle.flushPending();

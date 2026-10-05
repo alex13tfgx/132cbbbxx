@@ -19,6 +19,9 @@
     "main": [
       "code.wiosvisual.Wiosvisual",
       "code.wiosvisual.common.proxy.ProxyServer"
+    ],
+    "modmenu": [
+      "code.wiosvisual.compat.ModMenuIntegration"
     ]
   },
   "mixins": [

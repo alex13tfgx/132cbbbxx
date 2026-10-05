@@ -31,6 +31,7 @@ import code.wiosvisual.utils.client.managers.api.draggable.DraggableRepository;
 import code.wiosvisual.utils.client.managers.file.ClientFile;
 import code.wiosvisual.utils.client.managers.file.exception.FileLoadException;
 import code.wiosvisual.utils.client.managers.file.exception.FileSaveException;
+import code.wiosvisual.utils.client.server.ServerRestrictions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -100,7 +101,8 @@ extends ClientFile {
             if (module.getSecondKey() != -1 && module.getSecondKey() != -1) {
                 moduleObject.addProperty("secondBind", (Number)module.getSecondKey());
             }
-            moduleObject.addProperty("state", Boolean.valueOf(module.isState()));
+            // Выключенное запретом сервера сохраняем как включённое: иначе fail-closed LiteAPI затирал бы конфиг.
+            moduleObject.addProperty("state", Boolean.valueOf(module.isState() || ServerRestrictions.isSuppressed(module)));
             module.settings().forEach(setting -> this.addSettingToJsonObject(moduleObject, (Setting)setting));
             functionObject.add(module.getName().toLowerCase(), (JsonElement)moduleObject);
         }

@@ -55,6 +55,7 @@ final class Accounts {
         m.put("salt", Base64.getEncoder().encodeToString(salt));
         m.put("hash", hash(pass, salt));
         m.put("role", users().isEmpty() ? "Administrator" : "User");
+        m.put("uuid", UUID.randomUUID().toString());
         users().add(m);
         data.put("session", login);
         save();
@@ -78,6 +79,22 @@ final class Accounts {
     }
 
     void logout() { data.remove("session"); save(); }
+
+    /**
+     * Постоянный UUID аккаунта клиента: создаётся один раз и хранится в accounts.json.
+     * Это не игровой UUID — тот в офлайне считается из ника, как у Minecraft.
+     */
+    String uuid(String login) {
+        Map<String, Object> m = find(login);
+        if (m == null) return null;
+        String id = Json.str(m, "uuid");
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+            m.put("uuid", id);
+            save();
+        }
+        return id;
+    }
 
     boolean hasUsers() { return !users().isEmpty(); }
 

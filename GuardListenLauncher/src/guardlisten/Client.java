@@ -7,10 +7,15 @@ import java.util.*;
 final class Client {
     final String id, name, description, mc, loader;
     final String jar; // путь к jar мода (может быть null)
+    /** Можно ли выбрать версию (false — карточка «Скоро»). */
+    final boolean available;
+    /** Подпись под номером версии на экране выбора. */
+    final String subtitle;
 
-    Client(String id, String name, String description, String mc, String loader, String jar) {
+    Client(String id, String name, String description, String mc, String loader, String jar, boolean available, String subtitle) {
         this.id = id; this.name = name; this.description = description;
         this.mc = mc; this.loader = loader; this.jar = jar;
+        this.available = available; this.subtitle = subtitle;
     }
 
     static List<Client> load(Path appDir) {
@@ -23,18 +28,23 @@ final class Client {
                     String name = Json.str(m, "name");
                     if (name == null) continue;
                     String id = Json.str(m, "id") != null ? Json.str(m, "id") : name.toLowerCase().replaceAll("[^a-z0-9]+", "-");
+                    boolean av = !Boolean.FALSE.equals(m.get("available"));
+                    String sub = Json.str(m, "subtitle") != null ? Json.str(m, "subtitle")
+                            : av ? "Fabric · стабильная версия" : "Версия находится в разработке";
                     out.add(new Client(id, name, Json.str(m, "description") != null ? Json.str(m, "description") : "",
                             Json.str(m, "mc") != null ? Json.str(m, "mc") : "1.21.11",
-                            Json.str(m, "loader") != null ? Json.str(m, "loader") : "0.19.5", Json.str(m, "jar")));
+                            Json.str(m, "loader") != null ? Json.str(m, "loader") : "0.19.5", Json.str(m, "jar"), av, sub));
                 }
             }
         } catch (Exception ignored) { }
-        if (out.isEmpty()) {
-            out.add(new Client("wios", "WiosVisuals",
+        if (out.stream().noneMatch(c -> c.available)) {
+            out.add(0, new Client("wios", "WiosVisuals",
                     "WiosVisuals — приватный клиент для Minecraft 1.21.11 на Fabric. Визуальные модули, HUD, "
                             + "улучшенный интерфейс и удобные утилиты. Клиент регулярно обновляется и дополняется, "
                             + "чтобы вы в полной мере ощутили комфорт в игре.",
-                    "1.21.11", "0.19.5", null));
+                    "1.21.11", "0.19.5", null, true, "Fabric · стабильная версия"));
+            if (out.size() == 1)
+                out.add(new Client("wios-1214", "WiosVisuals", "", "1.21.4", "0.19.5", null, false, "Версия находится в разработке"));
         }
         return out;
     }
@@ -61,5 +71,11 @@ final class Client {
             } catch (Exception ignored) { }
         }
         return best;
+    }
+
+    /** Игра и мод уже скачаны — можно сразу играть. */
+    boolean installed(Path root) {
+        return Files.isRegularFile(root.resolve("versions").resolve(mc).resolve(mc + ".jar"))
+                && Files.isRegularFile(root.resolve("instances").resolve(id).resolve("mods").resolve("wiosvisual.jar"));
     }
 }
